@@ -1,12 +1,14 @@
 import sys
 import datetime
 import os
-
+import MySQLdb
 import pbp_espn
+import shotchart_cbssports
 
+from libscrape.config import constants
 
-LOGDIR_SOURCE = '../../logs/source/'
-LOGDIR_EXTRACT = '../../logs/extract/'
+LOGDIR_SOURCE = constants.LOGDIR_SOURCE
+LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
 
 def getDate():
@@ -25,25 +27,31 @@ def writeToFile(filename, list_plays):
     f.close()
 
 
-def main():
-    dt = getDate()
-    
-    files = {}
-    files_playbyplay = [f for f in os.listdir(LOGDIR_SOURCE) if dt in f and 'pbp_espn' in f]
-    files_shotchart = [f for f in os.listdir(LOGDIR_SOURCE) if dt in f and 'shotchart_cbssports' in f]
-   
- 
-    for f in files_playbyplay:
-        # Scrape ESPN play by play data
-        print f
-        list_plays = pbp_espn.Extract(open(LOGDIR_SOURCE + f,'r').read(), f).extractAll()
-        writeToFile(f,list_plays) 
-    """
-    for f in files_shotchart:
-        # Scrape CBS Sports shot chart data
-        list_files_shotchart = cbssports_shotchart.main(game_data)
-        files['shotchart'].append(list_files_shotchart) 
-    """
+def go(sourcedocs):
+
+    for (gamedata,(file_cbssports, file_espn)) in sourcedocs:
+        print "Extracting data from %s" % file_cbssports 
+        shotvars = {
+            'html': open(LOGDIR_SOURCE + file_cbssports,'r').read(),
+            'filename':  file_cbssports,
+            'home_team': gamedata['home_team'],
+            'away_team': gamedata['away_team'],
+            'game_name': gamedata['abbrev']
+        }
+        shotchart_cbssports.ShotExtract(**shotvars).extractAndDump()
+        print "Success"
+
+        print "Extracting data from %s" % file_espn
+        pbpvars = {
+            'html': open(LOGDIR_SOURCE + file_espn,'r').read(),
+            'filename':  file_espn,
+            'home_team': gamedata['home_team'],
+            'away_team': gamedata['away_team'],
+            'game_name': gamedata['abbrev']
+        }
+        pbp_espn.Extract(**pbpvars).extractAndDump()
+        print "Success"
+
 
 if __name__ == '__main__':
     sys.exit(main())

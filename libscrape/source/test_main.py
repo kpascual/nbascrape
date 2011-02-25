@@ -22,5 +22,6 @@ class checkGames(unittest.TestCase):
         
         self.assertEqual(len(games) * 2,len(game_files)) 
 
+
 if __name__ == '__main__':
     unittest.main()
