@@ -91,12 +91,13 @@ class Clean:
         cleaned = []
         for (period, idx, time_left, away_score, home_score, away_play, home_play) in plays:
             team, play, othervars = self.findPlay(away_play, home_play)
-            
+ 
             newline = dict([(f,'') for f in self.fields]) 
             newline.update([('period',period),('play_num',idx),('sec_elapsed_game',time_left),
                 ('game_id',self.game_id),('away_score',away_score),('home_score',home_score),('play_id',play),
                 ('team_code',team)])
             newline.update(othervars)
+
 
             cleaned.append(newline)
 
@@ -104,7 +105,7 @@ class Clean:
 
 
     def _getKnownPlays(self):
-        return db.nba_query("SELECT id,re,name FROM play")
+        return db.nba_query("SELECT id,re,name FROM play ORDER BY priority ASC, id ASC")
 
 
     def findPlay(self,away_play,home_play):
@@ -113,6 +114,7 @@ class Clean:
             if match:
                 othervars = {}
                 for key,val in match.groupdict().items():
+                    
                     if 'player' in key:
                         othervars[key + '_id'] = self._identifyPlayer(val, self.away_team)
                     else:
@@ -137,8 +139,12 @@ class Clean:
 
 
     def _identifyPlayer(self, player_name, team):
-        for (id, team_code, full_name) in self.existing_players:
+        # If player name ends in an "apostrophe s ('s)", then strip out apostrophe and "s"
+
+        for (id, team_code, full_name, alternate_name) in self.existing_players:
             if full_name == player_name and team == team_code:
+                return id
+            elif alternate_name == player_name and team == team_code:
                 return id
             elif full_name == player_name:
                 # Just in case I'm looking at the wrong team
@@ -151,7 +157,7 @@ class Clean:
 
 
     def _getExistingPlayers(self):
-        return db.nba_query("SELECT id, team_code, full_name FROM player WHERE team_code IN ('%s','%s')" % (self.home_team, self.away_team))
+        return db.nba_query("SELECT id, team_code, full_name, alternate_name FROM player WHERE team_code IN ('%s','%s')" % (self.home_team, self.away_team))
         
 
     def dumpIntoFile(self, data):

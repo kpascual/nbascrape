@@ -134,9 +134,9 @@ class CleanShots:
              
             if not isCBSSportsIdExists:  
                 ins = """
-                    INSERT INTO player (team_code, full_name, cbssports_player_id, jersey, position) 
-                    VALUES ('%s','%s',%s,'%s','%s')
-                """ % (team,name.replace('&nbsp;',' '),cbssports_id,jersey,pos)
+                    INSERT INTO player (team_code, full_name, cbssports_player_id, jersey, position, start_date) 
+                    VALUES ('%s','%s',%s,'%s','%s','%s')
+                """ % (team,name.replace('&nbsp;',' ').replace('&#039;',"\\'"),cbssports_id,jersey,pos,self.date_played)
                 logger.info("Adding %s to player list (team: %s, cbssports_id %s" % (name, team, cbssports_id))
                 curs = db.nba_curs()
                 curs.execute(ins)
@@ -148,9 +148,9 @@ class CleanShots:
                 curs = db.nba_curs()
                 curs.execute("UPDATE player SET end_date = '%s' WHERE id = %s" % (self.date_played, old_id))
                 ins = """
-                    INSERT INTO player (team_code, full_name, cbssports_player_id, jersey, position) 
-                    VALUES ('%s','%s',%s,'%s','%s')
-                """ % (team,name.replace('&nbsp;',' '),cbssports_id,jersey,pos)
+                    INSERT INTO player (team_code, full_name, cbssports_player_id, jersey, position, start_date) 
+                    VALUES ('%s','%s',%s,'%s','%s','%s')
+                """ % (team,name.replace('&nbsp;',' '),cbssports_id,jersey,pos,self.date_played)
                 logger.info("Adding %s to player list (team: %s, cbssports_id %s" % (name, team, cbssports_id))
                 curs.execute(ins)
                 cleaned.append((cbssports_id, curs.lastrowid))
@@ -159,6 +159,8 @@ class CleanShots:
                 surrogate = self.existing_players[int(cbssports_id)][0]
                 cleaned.append((cbssports_id, surrogate))
                 #print "correctly identified %s as %s: %s" % (cbssports_id, name, self.existing_players[int(cbssports_id)][0])
+
+        self.existing_players = dict(self._getExistingPlayers())
 
         return cleaned
 
