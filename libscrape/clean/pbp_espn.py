@@ -18,12 +18,13 @@ logger = logging.getLogger("play")
 
 class Clean:
 
-    def __init__(self, filename, home_team, away_team, game_name, game_id):
+    def __init__(self, filename, home_team, away_team, game_name, game_id, date_played):
         self.filename = filename
         self.away_team = away_team
         self.home_team = home_team
         self.game_name = game_name
         self.game_id = game_id
+        self.date_played = date_played
 
         self.known_plays = self._getKnownPlays()
         self.existing_players = self._getExistingPlayers()
@@ -98,7 +99,6 @@ class Clean:
                 ('team_code',team)])
             newline.update(othervars)
 
-
             cleaned.append(newline)
 
         return cleaned 
@@ -139,7 +139,6 @@ class Clean:
 
 
     def _identifyPlayer(self, player_name, team):
-        # If player name ends in an "apostrophe s ('s)", then strip out apostrophe and "s"
 
         for (id, team_code, full_name, alternate_name) in self.existing_players:
             if full_name == player_name and team == team_code:
@@ -149,6 +148,8 @@ class Clean:
             elif full_name == player_name:
                 # Just in case I'm looking at the wrong team
                 return id 
+            else:
+                return 0
 
         logger.warn("Could not detect player name: '%s'" % player_name)
         curs = db.nba_curs()
@@ -157,7 +158,10 @@ class Clean:
 
 
     def _getExistingPlayers(self):
-        return db.nba_query("SELECT id, team_code, full_name, alternate_name FROM player WHERE team_code IN ('%s','%s')" % (self.home_team, self.away_team))
+        return db.nba_query("""
+            SELECT id, team_code, full_name, alternate_name FROM player WHERE team_code IN ('%s','%s')
+                AND start_date <= '%s' AND (end_date >= '%s' OR end_date IS NULL)
+        """ % (self.home_team, self.away_team, self.date_played, self.date_played))
         
 
     def dumpIntoFile(self, data):

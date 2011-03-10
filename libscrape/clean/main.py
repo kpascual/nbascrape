@@ -59,7 +59,8 @@ def go(tuple_games_and_files):
             'home_team': gamedata['home_team'],
             'away_team': gamedata['away_team'],
             'game_name': gamedata['abbrev'],
-            'game_id'  : gamedata['id']
+            'game_id'  : gamedata['id'],
+            'date_played' : gamedata['date_played']
         }
         pbp_espn.Clean(**pbpvars).cleanAll()
         print "Done cleaning play by play data"

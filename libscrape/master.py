@@ -52,6 +52,12 @@ def restartFromExtract(dt):
     clean.main.go(gamedata)
     load.main.go(gamedata)
 
+def restartFromClean(dt):
+    games = chooseGames(dt)
+    gamedata = getExistingSourceDocs(games)
+ 
+    clean.main.go(gamedata)
+    load.main.go(gamedata)
 
 def getAll(dt):
 

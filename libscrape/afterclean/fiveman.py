@@ -2,10 +2,11 @@ from libscrape.config import db
 
 
 class FiveMan:
-    def __init__(self, game_id, away_team, home_team):
+    def __init__(self, game_id, away_team, home_team, date_played):
         self.game_id = game_id
         self.away_team = away_team 
         self.home_team = home_team
+        self.date_played = date_played
 
 
     def go(self):
@@ -14,7 +15,7 @@ class FiveMan:
 
 
     def getHomeFiveManUnit(self):
-        result = db.nba_query_dict("SELECT * FROM pbptest WHERE game_id = %s and period <= 4  ORDER BY period ASC, sec_elapsed_game ASC, play_num ASC" % self.game_id)
+        result = db.nba_query_dict("SELECT * FROM pbptest WHERE game_id = %s  ORDER BY period ASC, sec_elapsed_game ASC, play_num ASC" % self.game_id)
         players = self._getCurrentPlayers(self.home_team) 
         total_periods = self._getNumberOfPeriods()
 
@@ -23,16 +24,20 @@ class FiveMan:
 
 
     def getAwayFiveManUnit(self):
-        result = db.nba_query_dict("SELECT * FROM pbptest WHERE game_id = %s and period <= 4  ORDER BY period ASC, sec_elapsed_game ASC, play_num ASC" % self.game_id)
+        result = db.nba_query_dict("SELECT * FROM pbptest WHERE game_id = %s  ORDER BY period ASC, sec_elapsed_game ASC, play_num ASC" % self.game_id)
         players = self._getCurrentPlayers(self.away_team) 
         total_periods = self._getNumberOfPeriods()
-        
+       
         fiveman = self._guessFiveManUnits(result, total_periods, self.away_team, players) 
         return fiveman
 
 
     def _getCurrentPlayers(self, team):
-        sql = "SELECT id FROM player WHERE team_code = '%s' AND end_date IS NULL" % team
+        sql = """ 
+            SELECT id
+            FROM player 
+            WHERE start_date <= '%s' and (end_date >= '%s' OR end_date IS NULL) AND team_code = '%s'
+        """ % (self.date_played, self.date_played, team)
         return [itm[0] for itm in db.nba_query(sql)]
 
 
@@ -56,7 +61,6 @@ class FiveMan:
             # Create unit list for every quarter/period
             for itm in per: 
                 switches = ()
-                #print 'play num: %s, player_id: %s, team: %s' % (itm['play_num'],itm['player_id'],itm['team_code'])
                 if not list_units or itm['period'] != list_units[-1][1]:
                     this_unit = []
                 else:
@@ -66,19 +70,8 @@ class FiveMan:
                     
                     if player in players and player not in this_unit:
                         this_unit.append(player)
-
-                        #self._backfillIfPlayerDoesntExist(list_data, player)
                         if itm['play_id'] != 48:
                             list_units = self._backfillIfPlayerDoesntExist(player, list_units)
-                            # Backfill entire quarter if player wasn't found previously
-                            """
-                            for i,prev_data in enumerate(reversed(list_units)):
-                                if player in prev_data[2] or (prev_data[3] and player ==  prev_data[3][0]):
-                                    break
-                                else:
-                                    idx = len(list_units) - 1 - i
-                                    list_units[idx][2].append(player)
-                            """
 
                 # Play Id for players entering & exiting game
                 # Handle enter/exits
@@ -95,15 +88,17 @@ class FiveMan:
                                 break 
                         switches = (itm['player_id'],itm['player2_id'])
                     except:
-                        print "Couldn't find player %s.  Should this person be added into prior list?" % itm['player2_id']
+                        print "Couldn't find player %s.  Should this person be added into prior list?" % itm['player2_id']	
                 list_units.append((itm['play_num'],itm['period'],this_unit[:],switches))
 
             all_units.append(list_units)
 
         return all_units
 
+
     def _switchOutPlayers(self):
         pass    
+
 
     def _backfillIfPlayerDoesntExist(self, player, list_units):
         for i, prev_data in enumerate(reversed(list_units)):
@@ -115,8 +110,9 @@ class FiveMan:
         
         return list_units
 
+
 def main(game_id = 10):
-    gamedata = db.nba_query("SELECT id, away_team, home_team FROM game WHERE id = %s" % game_id)
+    gamedata = db.nba_query("SELECT id, away_team, home_team, date_played FROM game WHERE id = %s" % game_id)
     obj = FiveMan(*gamedata[0])
     
     obj.go()

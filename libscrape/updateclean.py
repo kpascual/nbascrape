@@ -3,12 +3,13 @@ import datetime
 import os
 
 from libscrape.config import db
+from libscrape.config import constants
 import clean.pbp_espn
 import load.update
 
-LOGDIR_SOURCE = '../logs/source/'
-LOGDIR_EXTRACT = '../logs/extract/'
-LOGDIR_CLEAN = '../logs/clean/'
+LOGDIR_SOURCE = constants.LOGDIR_SOURCE
+LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
+LOGDIR_CLEAN = constants.LOGDIR_CLEAN
 
 
 def chooseGames(game_ids):

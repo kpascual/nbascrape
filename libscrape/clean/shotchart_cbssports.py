@@ -40,9 +40,10 @@ class CleanShots:
         cleaned4 = self.adjustPlayer(cleaned3)
         cleaned5 = self.addGameId(cleaned4)
 
+        # Dump box score data
+        self.makePlayerBoxScore()
+
         self._dumpIntoFile(cleaned5)
-        #for itm in cleaned4:
-        #    db.nba_query("INSERT INTO shottest VALUES (%s,%s,'%s',%s,%s,%s,%s,%s,%s,%s,%s)" % tuple([0] + list(itm)))
 
     
     def _dumpIntoFile(self, plays):
@@ -161,14 +162,38 @@ class CleanShots:
                 #print "correctly identified %s as %s: %s" % (cbssports_id, name, self.existing_players[int(cbssports_id)][0])
 
         self.existing_players = dict(self._getExistingPlayers())
-
         return cleaned
 
   
     def _getExistingPlayers(self):
-        result = db.nba_query("SELECT cbssports_player_id, id, full_name, team_code FROM player WHERE end_date IS NULL")
+        result = db.nba_query("""
+            SELECT cbssports_player_id, id, full_name, team_code 
+            FROM player 
+            WHERE start_date <= '%s' and (end_date >= '%s' OR end_date IS NULL)
+                AND  team_code IN ('%s','%s')
+        """ % (self.date_played, self.date_played, self.away_team, self.home_team))
         return dict([(line[0], line[1:]) for line in result])
 
+
+    def makePlayerBoxScore(self):
+        box_score_data = []
+        
+        for (team, cbssports_id, name, jersey, pos, fg, threept, ft, points) in self.players:
+            try:
+                surrogate_player_id = self.existing_players[int(cbssports_id)][0]
+            except:
+                print "player id should exist, but surrogate key not found"
+                surrogate_player_id = -1
+
+            fgm, fga = fg.split('-')
+            threeptmade, threeptattempt = threept.split('-')
+            ftm, fta = ft.split('-')
+            box_score_data.append([self.game_id,surrogate_player_id, team, fgm, fga, threeptmade, threeptattempt, ftm, fta, points])
+
+        box_score_fields = [['game_id','player_id','team_code','fgm','fga','3ptm','3pta','ftm','fta','points']]
+        writer = csv.writer(open(LOGDIR_CLEAN + self.filename + '_boxscore','wb'),delimiter=',',lineterminator='\n')
+        writer.writerows(box_score_fields + box_score_data)
+         
 
     def swapForSurrogate(self, data):
         for (i,team,time_left,quarter,player_id,shot_type,result,x,y,distance) in data:
