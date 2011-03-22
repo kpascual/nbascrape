@@ -14,7 +14,7 @@ logger = logging.getLogger("extract")
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
 
-class ShotExtract():
+class ShotExtract:
 
     def __init__(self, html, game_name, filename, away_team, home_team):
         self.html = html

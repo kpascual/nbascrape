@@ -11,7 +11,7 @@ logger = logging.getLogger("extract")
 
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
-class Extract():
+class Extract:
 
     def __init__(self, html, filename, game_name, away_team, home_team):
         self.html = html
@@ -55,8 +55,10 @@ class Extract():
         home = [row.findAll('th')[3].renderContents() for i, row in self.numberedrows if len(row.findAll('td')) == 0]
         away = [row.findAll('th')[1].renderContents() for i, row in self.numberedrows if len(row.findAll('td')) == 0]
 
-        logger.warn("Multiple away team names found") if len(set(away)) > 1 else None 
-        logger.warn("Multiple home team names found") if len(set(home)) > 1 else None
+        if len(set(away)) > 1:
+            logger.warn("Multiple away team names found") 
+        if len(set(home)) > 1:
+            logger.warn("Multiple home team names found") 
 
         return (list(set(away))[0], list(set(home))[0])
 
@@ -137,15 +139,16 @@ class Extract():
             if self.away_team.lower() in action.lower():
                 cleaned_timeouts.append((counter, time_left,'','',action.replace(self.away_team.capitalize(),''),''))
 
-     
-        logging.info("No timeouts found") if len(timeouts) == 0 else None 
+        if len(timeouts) == 0: 
+            logger.info("No timeouts found") 
 
         return cleaned_timeouts
 
 
     def getPlayData(self):
         rows = [[i] + [t.renderContents() for t in row.findAll('td')] for i, row in self.numberedrows if len(row.findAll('td')) == 4]
-        logging.error("No play by play data found") if len(rows) == 0 else None 
+        if len(rows) == 0:
+            logger.error("No play by play data found") 
 
         newrows = []        
         for (index, time_left, away, score, home) in rows:
