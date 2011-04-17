@@ -83,8 +83,7 @@ def _writeToDatabase(games, date_played):
         db.nba_query(sql_update_nbacom)
 
 
-def main():
-    dt = datetime.date.today() - datetime.timedelta(days=1)
+def main(dt):
     
     html = getScoreboardDoc(dt)
     gamedata = getGameIdsAndTeams(html)
@@ -94,4 +93,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(datetime.date.today())

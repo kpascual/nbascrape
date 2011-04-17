@@ -9,6 +9,7 @@ import source.main
 import extract.main
 import clean.main
 import load.main
+import findgames
 
 
 LOGDIR_SOURCE = constants.LOGDIR_SOURCE
@@ -82,6 +83,8 @@ def main():
 
     print dt
     
+    # Identify games
+    findgames.main(dt) 
     # Choose games
     games = chooseGames(dt)
 
