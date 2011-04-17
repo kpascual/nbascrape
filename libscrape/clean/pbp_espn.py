@@ -11,8 +11,8 @@ from libscrape.config import constants
 LOGDIR_CLEAN = constants.LOGDIR_CLEAN
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
-logging.config.fileConfig("logging.conf")
-logger = logging.getLogger("play")
+#logging.config.fileConfig("logging.conf")
+#logger = logging.getLogger("play")
 
 
 
@@ -91,7 +91,7 @@ class Clean:
     def identifyPlays(self, plays):
         cleaned = []
         for (period, idx, time_left, away_score, home_score, away_play, home_play) in plays:
-            team, play, othervars = self.findPlay(away_play, home_play)
+            team, play, othervars = self._findPlay(away_play, home_play)
  
             newline = dict([(f,'') for f in self.fields]) 
             newline.update([('period',period),('play_num',idx),('sec_elapsed_game',time_left),
@@ -108,8 +108,10 @@ class Clean:
         return db.nba_query("SELECT id,re,name FROM play ORDER BY priority ASC, id ASC")
 
 
-    def findPlay(self,away_play,home_play):
+    def _findPlay(self,away_play,home_play):
         for (play_id, play_re, play_name) in self.known_plays:
+            
+            # Identify away play
             match = re.search(play_re,away_play)
             if match:
                 othervars = {}
@@ -122,6 +124,7 @@ class Clean:
 
                 return (self.away_team, play_id, othervars)
 
+            # Identify home play
             match = re.search(play_re,home_play)
             if match:
                 othervars = {}
@@ -134,13 +137,13 @@ class Clean:
                 return (self.home_team, play_id, othervars)
 
         print "No play found: %s" % play
-        logger.info("No play found: %s" % play)
+        #logger.info("No play found: %s" % play)
         return 0
 
 
     def _identifyPlayer(self, player_name, team):
-
         for (id, team_code, full_name, alternate_name) in self.existing_players:
+            #print "'%s: %s'" % (full_name, player_name)
             if full_name == player_name and team == team_code:
                 return id
             elif alternate_name == player_name and team == team_code:
@@ -149,9 +152,11 @@ class Clean:
                 # Just in case I'm looking at the wrong team
                 return id 
             else:
-                return 0
+                pass
 
-        logger.warn("Could not detect player name: '%s'" % player_name)
+        return 0
+
+        #logger.warn("Could not detect player name: '%s'" % player_name)
         curs = db.nba_curs()
         #curs.execute("INSERT INTO player (full_name) VALUES ('%s')" % player_name)
         #return curs.lastrowid
