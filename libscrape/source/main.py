@@ -43,11 +43,26 @@ def extractPlayByPlayAndShotChart(game):
     saveToFile(espn_filename, str_body)
     print '--- ESPN file for %s saved ' % game['abbrev']
 
+    # NBA.com
+    nbacom_filename = '%s_pbp_nbacom' % game['abbrev']
+    str_body = getSourceDoc(constants.URL_PLAYBYPLAY_ESPN.replace('<game_id>',str(game['nbacom_game_id']))) 
+    saveToFile(nbacom_filename, str_body)
+    print '--- file for %s saved ' % game['abbrev']
+
     return (cbs_filename, espn_filename)
 
 
 def get(games):
     return [(gamedata,extractPlayByPlayAndShotChart(gamedata)) for gamedata in games]
+
+
+def getNbaCom(game):
+
+    # NBA.com
+    nbacom_filename = '%s_pbp_nbacom' % game['abbrev']
+    str_body = getSourceDoc(constants.URL_PLAYBYPLAY_NBACOM.replace('<game_id>',str(game['nbacom_game_id']))) 
+    saveToFile(nbacom_filename, str_body)
+    print '--- file for %s saved ' % game['abbrev']
 
 
 def main(dt = None):

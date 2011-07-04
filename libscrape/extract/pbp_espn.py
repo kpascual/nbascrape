@@ -168,10 +168,6 @@ class Extract:
         writer = csv.writer(open(LOGDIR_EXTRACT + self.filename,'wb'),delimiter=',',lineterminator='\n')
         writer.writerows(list_data)
 
-        """
-        f = open(LOGDIR_EXTRACT + self.filename,'w')
-        writer.writerow([str(itm) for itm in list_data])
-        """
 
 """ 
     def examineRowLengths(self):

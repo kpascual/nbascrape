@@ -10,8 +10,24 @@ class FiveMan:
 
 
     def go(self):
-        self.getHomeFiveManUnit()
-        self.getAwayFiveManUnit()
+        home_units = self.getHomeFiveManUnit()
+        away_units = self.getAwayFiveManUnit()
+
+        for units in [home_units, away_units]:
+            print len(home_units)
+            print len(away_units)
+            for line in units:
+                
+                print line[2]
+                """
+                if len(line[2]) != 5:
+                    print "Found a play which does not have 5 players.  It has %s players (game_id %s)" % (len(line[2]), self.game_id)
+                    print line[2]
+                    return False
+                """
+
+        print "Successfully identified five man units!"
+        return True
 
 
     def getHomeFiveManUnit(self):
@@ -52,7 +68,7 @@ class FiveMan:
         for i in range(1,periods+1):
             data_by_periods.append([itm for itm in data if itm['period'] == i])
 
-        print "Number of periods: %s,%s" % (periods, len(data_by_periods))
+        #print "Number of periods: %s,%s" % (periods, len(data_by_periods))
 
         all_units = []
         for per in data_by_periods:
@@ -68,10 +84,11 @@ class FiveMan:
         
                 for player in [itm['player_id'],itm['player1_id'],itm['player2_id'],itm['assist_player_id']]:
                     
-                    if player in players and player not in this_unit:
+                    if player in players and player not in this_unit and itm['play_id'] != 93:
                         this_unit.append(player)
                         if itm['play_id'] != 48:
                             list_units = self._backfillIfPlayerDoesntExist(player, list_units)
+
 
                 # Play Id for players entering & exiting game
                 # Handle enter/exits
@@ -89,7 +106,8 @@ class FiveMan:
                         switches = (itm['player_id'],itm['player2_id'])
                     except:
                         print "Couldn't find player %s.  Should this person be added into prior list?" % itm['player2_id']	
-                list_units.append((itm['play_num'],itm['period'],this_unit[:],switches))
+                list_units.append((itm['play_num'],itm['period'],this_unit,switches))
+                #print '%s::%s play id: %s -- %s' % (itm['period'], itm['play_num'], itm['play_id'], this_unit)
 
             all_units.append(list_units)
 
