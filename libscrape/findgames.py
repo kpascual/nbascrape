@@ -13,12 +13,12 @@ def getScoreboardDoc(dt):
 
 def getGameIdsAndTeams(html):
     soup = BeautifulSoup(html)
-    links = soup.findAll(href=re.compile("/nba/playbyplay.*"))
+    links = soup.findAll(href=re.compile("/nba/photos.*"))
     links = list(set(links))
-
+    
     game_ids = []
     for l in links:
-        match = re.search("/nba/playbyplay\?gameId=(?P<game_id>[0-9]+)$",l['href'])
+        match = re.search("/nba/photos\?gameId=(?P<game_id>[0-9]+)$",l['href'])
         
         if match:
             found = match.groupdict()
@@ -89,7 +89,6 @@ def main(dt):
     gamedata = getGameIdsAndTeams(html)
     complete_gamedata = _fillInGameData(gamedata, dt)
     _writeToDatabase(complete_gamedata, dt)
-
 
 
 if __name__ == '__main__':

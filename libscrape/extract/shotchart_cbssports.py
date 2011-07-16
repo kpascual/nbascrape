@@ -8,8 +8,8 @@ import logging.config
 from BeautifulSoup import BeautifulSoup
 from libscrape.config import constants
 
-logging.config.fileConfig('logging.conf')
-logger = logging.getLogger("extract")
+#logging.config.fileConfig('logging.conf')
+#logger = logging.getLogger("extract")
 
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
@@ -39,7 +39,7 @@ class ShotExtract:
             matched = [[self.home_team, player.split(':')[0]] + player.split(':')[1].split(',') for player in match.group('info').split('|')] 
             return matched
 
-        logger.warn("No Home Players found in CBS Sports Shot Chart Data")
+        #logger.warn("No Home Players found in CBS Sports Shot Chart Data")
         return []
 
 
@@ -51,7 +51,7 @@ class ShotExtract:
             matched = [[self.away_team, player.split(':')[0]] + player.split(':')[1].split(',') for player in match.group('info').split('|')] 
             return matched
 
-        logger.warn("No Away Players found in CBS Sports Shot Chart Data")
+        #logger.warn("No Away Players found in CBS Sports Shot Chart Data")
         return []
 
 
@@ -64,7 +64,8 @@ class ShotExtract:
             shotdata = matches.group('info')
             list_shotdata = [[i] + itm.split(',') for i,itm in enumerate(shotdata.split('~'))]
         else:    
-            logger.warn("No Shot data found in CBS Sports shot data")
+            pass
+            #logger.warn("No Shot data found in CBS Sports shot data")
 
         return list_shotdata
 
