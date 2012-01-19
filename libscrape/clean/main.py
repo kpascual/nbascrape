@@ -4,6 +4,10 @@ import sys
 import os
 import pbp_espn
 import shotchart_cbssports
+import shotchart_espn
+import shotchart_nbacom
+import boxscore_cbssports
+import player
 
 from libscrape.config import constants
 
@@ -39,32 +43,43 @@ def main():
 
 
 def go(tuple_games_and_files):
-    for (gamedata,(file_cbssports, file_espn)) in tuple_games_and_files:
-        print "+++ Cleaning data in %s" % file_cbssports
+    for gamedata,filenames in tuple_games_and_files:
+
+        print "+++ Resolving master player database"
+        obj = player.PlayerNbaCom(LOGDIR_EXTRACT + filenames['boxscore_nbacom'], gamedata)
+        obj.resolveNewPlayers()
+        obj = player.PlayerCbsSports(LOGDIR_EXTRACT + filenames['shotchart_cbssports'] + '_players', gamedata)
+        obj.resolveNewPlayers()
+
+        print "+++ Cleaning CBSSports.com shot chart data in %s" % (filenames['shotchart_cbssports'])
         shotvars = {
-            'filename':  file_cbssports,
-            'home_team': gamedata['home_team'],
-            'away_team': gamedata['away_team'],
-            'game_name': gamedata['abbrev'],
-            'game_id':   gamedata['id'],
-            'date_played': gamedata['date_played']
+            'filename':  filenames['shotchart_cbssports'],
+            'gamedata':  gamedata
         }
         
         shotchart_cbssports.CleanShots(**shotvars).clean()
-        print "Done cleaning shot chart data"
+        print "+++ Done cleaning CBSSports.com shot chart data"
 
-        print "+++ Cleaning data in %s" % file_espn
+        print "+++ Creating CBSSports.com boxscore data s" 
+        boxscore_cbssports.CleanBoxScore(gamedata).clean()
+        print "+++ Done cleaning CBSSports.com shot chart data"
+
+
+        print "+++ Cleaning ESPN play by play data in %s" % (filenames['playbyplay_espn'])
         pbpvars = {
-            'filename':  file_espn,
-            'home_team': gamedata['home_team'],
-            'away_team': gamedata['away_team'],
-            'game_name': gamedata['abbrev'],
-            'game_id'  : gamedata['id'],
-            'date_played' : gamedata['date_played']
+            'filename':  filenames['playbyplay_espn'],
+            'gamedata': gamedata
         }
         pbp_espn.Clean(**pbpvars).cleanAll()
-        print "Done cleaning play by play data"
+        print "+++ Done cleaning ESPN play by play data"
 
+        print "+++ Cleaning NBA.com shot chart data in %s" % (filenames['shotchart_nbacom'])
+        shotchart_nbacom.Clean(filenames['shotchart_nbacom'],gamedata).cleanAll()
+        print "+++ Done"
+
+        print "+++ Cleaning ESPN.com shot chart data in %s" % (filenames['shotchart_espn'])
+        shotchart_espn.Clean(filenames['shotchart_espn'],gamedata).cleanAll()
+        print "+++ Done"
 
 
 if __name__ == '__main__':

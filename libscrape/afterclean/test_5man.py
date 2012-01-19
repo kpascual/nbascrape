@@ -3,7 +3,7 @@ from libscrape.config import db
 import unittest
 
     
-sample = db.nba_query_dict("SELECT * FROM game WHERE date_played <= '2011-02-26' ORDER BY RAND() LIMIT 1")
+sample = db.nba_query_dict("SELECT * FROM game WHERE date_played <= '2011-02-26' ORDER BY RAND() LIMIT 10")
 #sample = db.nba_query_dict("SELECT * FROM game WHERE id = 240")
 
 

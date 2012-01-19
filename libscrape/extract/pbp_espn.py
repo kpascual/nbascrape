@@ -1,21 +1,18 @@
 from libscrape.config import constants
 
 from BeautifulSoup import BeautifulSoup
-import logging
-import logging.config
 import csv
 import re
 
-logging.config.fileConfig('logging.conf')
-logger = logging.getLogger("extract")
 
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
 class Extract:
 
-    def __init__(self, html, filename, game_name, away_team, home_team):
+    def __init__(self, html, filename, gamedata):
         self.html = html
-        self.game_name = game_name
+        self.gamedata = gamedata
+        self.game_name = self.gamedata['abbrev']
         self.filename = filename
         self.soup = BeautifulSoup(self.html)
         
@@ -26,8 +23,9 @@ class Extract:
         self.backup_periods = self.makeBackupPeriodRanges()
         self.periods = self.getPeriodIndexes()
 
-        self.home_team = home_team
-        self.away_team = away_team
+        self.home_team_city = self.gamedata['home_team_city']
+        self.away_team_city = self.gamedata['away_team_city']
+
 
     def extractAndDump(self):
         plays = self.extractAll()
@@ -46,7 +44,6 @@ class Extract:
                 plays_with_quarters.append([periods[line[0]]] + list(line))
             except:
                 plays_with_quarters.append(["check quarter"] + list(line))
-                logger.warn("%s: quarter not identified: %s" % (self.game_name, line[0]))
 
         return plays_with_quarters 
 
@@ -55,10 +52,6 @@ class Extract:
         home = [row.findAll('th')[3].renderContents() for i, row in self.numberedrows if len(row.findAll('td')) == 0]
         away = [row.findAll('th')[1].renderContents() for i, row in self.numberedrows if len(row.findAll('td')) == 0]
 
-        if len(set(away)) > 1:
-            logger.warn("Multiple away team names found") 
-        if len(set(home)) > 1:
-            logger.warn("Multiple home team names found") 
 
         return (list(set(away))[0], list(set(home))[0])
 
@@ -86,10 +79,8 @@ class Extract:
         for period, vals in periods.items():
             cleaned = {'start': 0, 'end': 0}
             if 'start' not in vals.keys(): 
-                logger.warn("%s - Could not find quarter start index -- using backup" % self.game_name)
                 cleaned['start'] = self.backup_periods[period]['start']
             if 'end' not in vals.keys():
-                logger.warn("%s - Could not find quarter end index -- using backup" % self.game_name)
                 cleaned['end'] = self.backup_periods[period]['end']
 
             cleaned.update(vals)
@@ -133,22 +124,18 @@ class Extract:
         
         cleaned_timeouts = []
         for (counter, time_left, action) in timeouts:
-            if self.home_team.lower() in action.lower():
-                cleaned_timeouts.append((counter, time_left,'','','',action.replace(self.home_team.capitalize(),'')))
+            if self.home_team_city.lower() in action.lower():
+                cleaned_timeouts.append((counter, time_left,'','','',action.replace(self.home_team_city.capitalize(),'')))
        
-            if self.away_team.lower() in action.lower():
-                cleaned_timeouts.append((counter, time_left,'','',action.replace(self.away_team.capitalize(),''),''))
+            if self.away_team_city.lower() in action.lower():
+                cleaned_timeouts.append((counter, time_left,'','',action.replace(self.away_team_city.capitalize(),''),''))
 
-        if len(timeouts) == 0: 
-            logger.info("No timeouts found") 
 
         return cleaned_timeouts
 
 
     def getPlayData(self):
         rows = [[i] + [t.renderContents() for t in row.findAll('td')] for i, row in self.numberedrows if len(row.findAll('td')) == 4]
-        if len(rows) == 0:
-            logger.error("No play by play data found") 
 
         newrows = []        
         for (index, time_left, away, score, home) in rows:

@@ -3,24 +3,21 @@ import re
 import csv
 import datetime
 import sys
-import logging
-import logging.config
 from BeautifulSoup import BeautifulSoup
 from libscrape.config import constants
 
-logging.config.fileConfig('logging.conf')
-logger = logging.getLogger("extract")
 
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
 
 class ShotExtract:
 
-    def __init__(self, html, game_name, filename, away_team, home_team):
+    def __init__(self, html, filename, gamedata):
         self.html = html
-        self.game_name = game_name
-        self.away_team = away_team
-        self.home_team = home_team 
+        self.gamedata = gamedata
+        self.game_name = self.gamedata['abbrev']
+        self.away_team = self.gamedata['away_team_id']
+        self.home_team = self.gamedata['home_team_id']
         self.filename = filename
 
 
@@ -31,6 +28,7 @@ class ShotExtract:
         self._dumpShots(shots)
         self._dumpPlayers(home_players + away_players)
 
+
     def getHomePlayers(self):
         pattern = re.compile(".*var\s+playerDataHomeString\s+\=\s+new\s+String\(\"(?P<info>.+)\"\).+")
         
@@ -39,7 +37,6 @@ class ShotExtract:
             matched = [[self.home_team, player.split(':')[0]] + player.split(':')[1].split(',') for player in match.group('info').split('|')] 
             return matched
 
-        logger.warn("No Home Players found in CBS Sports Shot Chart Data")
         return []
 
 
@@ -51,7 +48,6 @@ class ShotExtract:
             matched = [[self.away_team, player.split(':')[0]] + player.split(':')[1].split(',') for player in match.group('info').split('|')] 
             return matched
 
-        logger.warn("No Away Players found in CBS Sports Shot Chart Data")
         return []
 
 
@@ -64,8 +60,7 @@ class ShotExtract:
             shotdata = matches.group('info')
             list_shotdata = [[i] + itm.split(',') for i,itm in enumerate(shotdata.split('~'))]
         else:    
-            logger.warn("No Shot data found in CBS Sports shot data")
-
+            pass
         return list_shotdata
 
 

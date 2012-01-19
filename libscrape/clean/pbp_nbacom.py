@@ -23,12 +23,8 @@ class Clean:
         for play in playbyplaydata:
             playdata = dict(play.attrs)
             playdata['text'] = play.contents[0]
-            playdata['seconds_left'] = self._transformTimeToTenthSeconds(playdata['game_clock'])
+            playdata['time_left'] = self._transformTimeToTenthSeconds(playdata['game_clock'])
             print playdata
-
-
-    def getShotChartData(self):
-        pass
 
 
     def _transformTimeToTenthSeconds(self, game_clock):
