@@ -15,7 +15,7 @@ LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
 
 class CleanShots:
-    def __init__(self, filename, gamedata):
+    def __init__(self, filename, gamedata, dbobj):
         self.filename = filename
         self.gamedata = gamedata
         self.away_team = self.gamedata['away_team_id']
@@ -23,12 +23,13 @@ class CleanShots:
         self.game_name = self.gamedata['abbrev']
         self.game_id = self.gamedata['id']
         self.date_played = self.gamedata['date_played']
+        self.db = dbobj
 
         self.players = [line for line in csv.reader(open(LOGDIR_EXTRACT + self.filename + '_players','r'),delimiter=',',lineterminator='\n')]
         self.shots = [line for line in csv.reader(open(LOGDIR_EXTRACT + self.filename + '_shots','r'),delimiter=',',lineterminator='\n')]
 
-        self.finalfields = ['shot_num','team_id','sec_elapsed_game','period','player_id',
-                            'shot_type_id','result','x','y','distance','game_id']
+        self.finalfields = ['shot_num','team_id','deciseconds_left','period','player_id',
+                            'shot_type_id','is_shot_made','x','y','distance','game_id']
 
     def clean(self):
 
@@ -92,7 +93,7 @@ class CleanShots:
         return cleaned
         
     def _getConformedTime(self):
-        return db.nba_query_dict("SELECT * FROM dim_times")
+        return self.db.query_dict("SELECT * FROM dim_times")
 
 
     def replaceWithConformedTime(self, plays):
@@ -147,7 +148,7 @@ class CleanShots:
 
 
     def _getPlayerIdsInGame(self):
-        players = db.nba_query_dict("SELECT * FROM nba_staging.player_resolved_test")
+        players = self.db.query_dict("SELECT * FROM player_resolved_test")
         # Index by nbacom_player_id
     
         players_indexed = {}

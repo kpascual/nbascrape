@@ -15,19 +15,20 @@ LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
 
 class CleanBoxScore:
-    def __init__(self, gamedata):
+    def __init__(self, gamedata, dbobj):
         self.gamedata = gamedata
         self.away_team = self.gamedata['away_team_id']
         self.home_team = self.gamedata['home_team_id']
         self.game_name = self.gamedata['abbrev']
         self.game_id = self.gamedata['id']
         self.date_played = self.gamedata['date_played']
+        self.db = dbobj
 
         self.data = [line for line in csv.reader(open(LOGDIR_EXTRACT + self.gamedata['abbrev'] + '_shotchart_cbssports_players','r'),delimiter=',',lineterminator='\n')]
 
 
     def _getPlayerIdsInGame(self):
-        players = db.nba_query_dict("SELECT * FROM nba_staging.player_resolved_test")
+        players = self.db.query_dict("SELECT * FROM player_resolved_test")
         # Index by nbacom_player_id
     
         players_indexed = {}

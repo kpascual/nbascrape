@@ -21,11 +21,12 @@ LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
 class PlayerNbaCom:
 
-    def __init__(self, filename, game_data = None):
+    def __init__(self, filename, gamedata, dbobj):
+        self.gamedata = gamedata
         self.xml = open(filename,'r').read()
         self.soup = BeautifulStoneSoup(self.xml)
-        self.date_played = filename.replace(LOGDIR_EXTRACT,'')[:10]
-        self.game_data = game_data
+        self.date_played = self.gamedata['date_played']
+        self.db = dbobj
 
 
     def resolveNewPlayers(self):
@@ -66,26 +67,26 @@ class PlayerNbaCom:
 
 
             if nbacom_player_id:
-                db.nba_query("""
-                    INSERT INTO nba_staging.player_nbacom_by_game
+                self.db.query("""
+                    INSERT INTO player_nbacom_by_game
                         (nbacom_player_id, game_id, player_tag, last_name, first_name, jersey_number, team) 
                     VALUES ("%s","%s","%s","%s","%s","%s", "%s")
-                """ % (nbacom_player_id, self.game_data['id'], player_tag, last_name, first_name, jersey_number, team))
+                """ % (nbacom_player_id, self.gamedata['id'], player_tag, last_name, first_name, jersey_number, team))
 
-                result = db.nba_query("SELECT * FROM nba_staging.player_nbacom WHERE nbacom_player_id = '%s'" % (nbacom_player_id))
+                result = self.db.query("SELECT * FROM player_nbacom WHERE nbacom_player_id = '%s'" % (nbacom_player_id))
                 if not result:
                     print "cannot find %s.  inserting into db" % (row[2])
                     sql = """
-                        INSERT INTO nba_staging.player_nbacom 
+                        INSERT INTO player_nbacom 
                             (nbacom_player_id, player_tag, last_name, first_name, date_found) 
                         VALUES ("%s","%s","%s","%s","%s")
                     """ % (nbacom_player_id, player_tag, last_name, first_name, self.date_played)
                     
-                    db.nba_query(sql)
+                    self.db.query(sql)
 
                     # Add to resolved player table
-                    result = db.nba_query("""
-                        INSERT INTO nba_staging.player_resolved_test
+                    result = self.db.query("""
+                        INSERT INTO player_resolved_test
                             (nbacom_player_id, last_name, first_name, date_found) 
                         VALUES ("%s","%s","%s","%s")
                     """ % (nbacom_player_id, last_name, first_name, self.date_played))
@@ -101,50 +102,50 @@ class PlayerNbaCom:
     
     def managePlayerTeamHistory(self, nbacom_player_id, nbacom_team_code): 
 
-        player_id = db.nba_query("""
+        player_id = self.db.query("""
             SELECT p.id
             FROM 
-                nba_staging.player_resolved_test p 
+                player_resolved_test p 
             WHERE 
                 p.nbacom_player_id = "%s"
         """ % (nbacom_player_id))[0][0]
        
         team_id = '' 
-        team_id = db.nba_query("""
+        team_id = self.db.query("""
             SELECT id
             FROM team
             WHERE nbacom_code = "%s"
         """ % (nbacom_team_code))[0][0]
         
         # Add to team-player history table if it isn't already existing
-        check_team = db.nba_query("""
-            SELECT id FROM nba_staging.player_team_history
+        check_team = self.db.query("""
+            SELECT id FROM player_team_history
             WHERE player_id = %s AND team_id = "%s" AND end_date IS NULL
         """ % (player_id, team_id)) 
 
         if not check_team:
             # If exists, close out most recent record
-            player_team_history = db.nba_query("""
-                SELECT id FROM nba_staging.player_team_history
+            player_team_history = self.db.query("""
+                SELECT id FROM player_team_history
                 WHERE player_id = %s AND end_date IS NULL
             """ % (player_id))
            
             if player_team_history:
                 player_team_history_id = player_team_history[0][0] 
-                db.nba_query("""
-                    UPDATE nba_staging.player_team_history SET end_date = "%s" WHERE id = %s
+                self.db.query("""
+                    UPDATE player_team_history SET end_date = "%s" WHERE id = %s
                 """ % (self.date_played, player_team_history_id))
                 logging.info("""
                     Closing out player team history for player_id: %s, player_team_history_id: %s
                 """ % (player_id, player_team_history_id))
 
             # Add new record
-            db.nba_query("""
-                INSERT IGNORE INTO nba_staging.player_team_history
+            self.db.query("""
+                INSERT IGNORE INTO player_team_history
                 (player_id, team_id, start_date)
                 SELECT id, %s, "%s"
                 FROM
-                    nba_staging.player_resolved_test p
+                    player_resolved_test p
                 WHERE
                     p.id = "%s"
             """ % (team_id, self.date_played, player_id))
@@ -154,11 +155,13 @@ class PlayerNbaCom:
 
 
 class PlayerCbsSports: 
-    def __init__(self, filename, game_data = None):
+    def __init__(self, filename, gamedata, dbobj):
         reader = csv.reader(open(filename,'r'),delimiter=',',lineterminator='\n')
+
+        self.gamedata = gamedata
         self.data = [row for row in reader]
-        self.date_played = filename.replace(LOGDIR_EXTRACT,'')[:10]
-        self.game_data = game_data
+        self.date_played = self.gamedata['date_played']
+        self.db = dbobj
 
 
     def resolveNewPlayers(self):
@@ -172,44 +175,44 @@ class PlayerCbsSports:
             position            = row[4]
 
             if cbssports_player_id:
-                db.nba_query("""
-                    INSERT INTO nba_staging.player_cbssports_by_game
+                self.db.query("""
+                    INSERT INTO player_cbssports_by_game
                     (game_id, cbssports_player_id, full_name, first_name, last_name, cbs_team_code, jersey_number, position)
                     VALUES
                     (%s,"%s", "%s", "%s", "%s", "%s", "%s", "%s")
-                """ % (self.game_data['id'], cbssports_player_id, full_name, first_name, last_name, cbs_team_code, jersey_number, position))
+                """ % (self.gamedata['id'], cbssports_player_id, full_name, first_name, last_name, cbs_team_code, jersey_number, position))
 
-                result = db.nba_query("SELECT * FROM nba_staging.player_cbssports WHERE cbssports_player_id = '%s'" % (cbssports_player_id))
+                result = self.db.query("SELECT * FROM player_cbssports WHERE cbssports_player_id = '%s'" % (cbssports_player_id))
 
                 if not result:
                     print "cannot find.  inserting into db"
-                    db.nba_query("""
-                        INSERT INTO nba_staging.player_cbssports
+                    self.db.query("""
+                        INSERT INTO player_cbssports
                             (cbssports_player_id, full_name, first_name, last_name, date_found) 
                         VALUES ("%s","%s","%s","%s","%s")
                     """ % (cbssports_player_id, full_name, first_name, last_name, self.date_played))
                     print "cannot find %s.  inserting into db" % (full_name)
                     logging.debug("Found new player in CBSSports.com files: %s" % (full_name))
 
-                self.matchWithResolvedPlayer(cbssports_player_id, full_name, cbs_team_code, self.game_data['id'])
+                self.matchWithResolvedPlayer(cbssports_player_id, full_name, cbs_team_code, self.gamedata['id'])
 
 
     def matchWithResolvedPlayer(self, cbssports_player_id, full_name, cbs_team_code, game_id):
-        existing_player = db.nba_query("""
-            SELECT * FROM nba_staging.player_resolved_test
+        existing_player = self.db.query("""
+            SELECT * FROM player_resolved_test
             WHERE cbssports_player_id = %s
         """ % (cbssports_player_id))
 
         if not existing_player:
-            team_codes = db.nba_query("SELECT nbacom_code, code, id FROM team WHERE id = '%s'" % (cbs_team_code))[0]
+            team_codes = self.db.query("SELECT nbacom_code, code, id FROM team WHERE id = '%s'" % (cbs_team_code))[0]
             nbacom_team_code = team_codes[0]
             team_code = team_codes[1]
             team_id = team_codes[2]
 
             # Get list of possible matches from nba.com names
-            result = db.nba_query("""
+            result = self.db.query("""
                 SELECT nbacom_player_id, first_name, last_name
-                FROM nba_staging.player_nbacom_by_game
+                FROM player_nbacom_by_game
                 WHERE game_id = '%s' AND team = '%s'
             """ % (game_id, nbacom_team_code))
 
@@ -220,8 +223,8 @@ class PlayerCbsSports:
                 best_match = match[0]
                 matched_nbacom_player_id = result[names.index(best_match)][0]
                 
-                db.nba_query("""
-                    UPDATE nba_staging.player_resolved_test
+                self.db.query("""
+                    UPDATE player_resolved_test
                     SET cbssports_player_id = "%s"
                     WHERE nbacom_player_id = "%s"
                         AND cbssports_player_id IS NULL
@@ -242,13 +245,13 @@ class ResolvePlayer:
         pass
 
     def resolveCbsSportsPlayers(self):
-        result = db.nba_query("""
+        result = self.db.query("""
             SELECT nbacom_player_id, last_name, first_name, jersey_number, date_found
-            FROM nba_staging.player_nbacom WHERE date_found = '%s'
+            FROM player_nbacom WHERE date_found = '%s'
         """ % (self.dt))
 
         for player_data in result:
-            matched_players = db.nba_query("""
+            matched_players = self.db.query("""
                 SELECT nbacom_player_id
                 FROMa
             """)
@@ -261,15 +264,15 @@ def populateOldPlayers():
     """
     for f in nbacom_files:
         print f
-        game_data = db.nba_query_dict("SELECT * FROM nba.game WHERE abbrev = '%s'" % (f.replace('_boxscore_nbacom','')))[0]
+        game_data = self.db_dict("SELECT * FROM nba.game WHERE abbrev = '%s'" % (f.replace('_boxscore_nbacom','')))[0]
         obj = PlayerNbaCom(LOGDIR_EXTRACT + f, game_data)
         obj.resolveNewPlayers()
     """
 
     for f in cbssports_files:
         print f
-        game_data = db.nba_query_dict("SELECT * FROM nba.game WHERE abbrev = '%s'" % (f.replace('_shotchart_cbssports_players','')))[0]
-        obj = PlayerCbsSports(LOGDIR_EXTRACT + f, game_data)
+        gamedata = self.nba_query_dict("SELECT * FROM nba.game WHERE abbrev = '%s'" % (f.replace('_shotchart_cbssports_players','')))[0]
+        obj = PlayerCbsSports(LOGDIR_EXTRACT + f, gamedata)
         obj.resolveNewPlayers()    
 
 
@@ -279,14 +282,14 @@ def main():
     f = '2011-12-26_PHI@POR_shotchart_cbssports_players'
     f2 = '2011-12-26_PHI@POR_boxscore_nbacom'
 
-    game_data = db.nba_query_dict("SELECT * FROM game WHERE id = 1279")[0]
+    gamedata = self.nba_query_dict("SELECT * FROM game WHERE id = 1279")[0]
     dt = datetime.date(2011, 12, 20)
     #obj = ResolvePlayer(dt)
     #obj.addNbaComPlayers()
 
-    obj = PlayerNbaCom(LOGDIR_EXTRACT + f2, game_data)
+    obj = PlayerNbaCom(LOGDIR_EXTRACT + f2, gamedata)
     obj.resolveNewPlayers()
-    obj = PlayerCbsSports(LOGDIR_EXTRACT + f, game_data)
+    obj = PlayerCbsSports(LOGDIR_EXTRACT + f, gamedata)
     obj.resolveNewPlayers()
 
 

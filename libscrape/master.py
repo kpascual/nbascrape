@@ -79,30 +79,36 @@ def getExistingSourceDocs(games):
 
 
 def restartFromExtract(dt):
+    dbobj = db.Db(db.dbconn_nba_test)
+
     games = chooseGames(dt)
     gamedata = getExistingSourceDocs(games)
-
     
     extract.main.go(gamedata)
-    clean.main.go(gamedata)
-    load.main.go(gamedata)
+    clean.main.go(gamedata, dbobj)
+    load.main.go(gamedata, dbobj)
 
 
 def restartFromClean(dt):
+    dbobj = db.Db(db.dbconn_nba_test)
+
     games = chooseGames(dt)
     gamedata = getExistingSourceDocs(games)
  
-    clean.main.go(gamedata)
-    load.main.go(gamedata)
+    clean.main.go(gamedata, dbobj)
+    load.main.go(gamedata, dbobj)
 
 
 def cleanOnly(dt):
+    dbobj = db.Db(db.dbconn_nba_test)
+
     games = chooseGames(dt)
     gamedata = getExistingSourceDocs(games)
  
-    clean.main.go(gamedata)
+    clean.main.go(gamedata, dbobj)
 
 def extractOnly(dt):
+
     games = chooseGames(dt)
     gamedata = getExistingSourceDocs(games)
  
@@ -110,6 +116,8 @@ def extractOnly(dt):
 
 
 def getAll(dt):
+
+    dbobj = db.Db(db.dbconn_nba_test)
 
     # Choose games
     games = chooseGames(dt)
@@ -119,11 +127,14 @@ def getAll(dt):
     gamedata = source.main.go(games)
 
     extract.main.go(gamedata)
-    clean.main.go(gamedata)
+    clean.main.go(gamedata, dbobj)
     load.main.go(gamedata)
 
 
 def main():
+
+    dbobj = db.Db(db.dbconn_nba_test)
+
     try:
         dt = sys.argv[1]
         dt = datetime.date(*map(int,dt.split('-')))
@@ -142,8 +153,8 @@ def main():
     gamedata_and_filenames = source.main.go(games)
 
     extract.main.go(gamedata_and_filenames)
-    clean.main.go(gamedata_and_filenames)
-    load.main.go(gamedata_and_filenames)
+    clean.main.go(gamedata_and_filenames, dbobj)
+    load.main.go(gamedata_and_filenames, dbobj)
     
 
 if __name__ == '__main__':

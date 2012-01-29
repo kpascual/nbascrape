@@ -16,12 +16,13 @@ LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
 class Clean:
 
-    def __init__(self, filename, gamedata):
+    def __init__(self, filename, gamedata, dbobj):
         self.xml = open(LOGDIR_EXTRACT + filename,'r').read()
         self.filename = filename
         self.soup = BeautifulStoneSoup(self.xml)
         self.date_played = filename.replace(LOGDIR_EXTRACT,'')[:10]
         self.gamedata = gamedata
+        self.db = dbobj
 
         self.home_team = self.gamedata['home_team_id']
         self.away_team = self.gamedata['away_team_id']
@@ -63,7 +64,7 @@ class Clean:
             
 
     def _getPlayerIds(self):
-        players = db.nba_query_dict("SELECT * FROM nba_staging.player_resolved_test")
+        players = self.db.query_dict("SELECT * FROM player_resolved_test")
         # Index by nbacom_player_id
     
         players_indexed = {}
@@ -81,7 +82,7 @@ class Clean:
         # (4 ft from baseline to each backboard, and an 18-inch diameter rim, 9 inch radius)
         # X coordinate is the width of the court
         # Y coordinate is the length
-      
+        # For away teams, it appears the x-coordinate is flipped 
         new_shots = [] 
         for shot in shots:
             shot['y'] = int(shot['y']) + 50

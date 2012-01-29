@@ -19,12 +19,13 @@ LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
 class Clean(ShotChart):
 
-    def __init__(self, filename, gamedata):
+    def __init__(self, filename, gamedata, dbobj):
         self.xml = open(LOGDIR_EXTRACT + filename,'r').read()
         self.filename = filename
         self.soup = BeautifulStoneSoup(self.xml)
         self.date_played = filename.replace(LOGDIR_EXTRACT,'')[:10]
         self.gamedata = gamedata
+        self.db = dbobj
 
 
     def cleanAll(self):
@@ -169,10 +170,10 @@ class Clean(ShotChart):
 
 
     def _getPlayerIds(self):
-        players = db.nba_query_dict("""
+        players = self.db.query_dict("""
             SELECT p.*
-            FROM nba_staging.player_resolved_test p
-                INNER JOIN nba_staging.player_nbacom_by_game g ON g.nbacom_player_id = p.nbacom_player_id
+            FROM player_resolved_test p
+                INNER JOIN player_nbacom_by_game g ON g.nbacom_player_id = p.nbacom_player_id
             WHERE g.game_id = %s
         """ % (self.gamedata['id']))
         # Index by nbacom_player_id

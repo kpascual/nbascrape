@@ -1,20 +1,22 @@
 from libscrape.config import db
-
+import json
 
 class FiveMan:
-    def __init__(self, game_id, away_team, home_team, date_played):
-        self.game_id = game_id
-        self.away_team = away_team 
-        self.home_team = home_team
-        self.date_played = date_played
+    def __init__(self, gamedata):
+        self.gamedata = gamedata
+        self.game_id = self.gamedata['id']
+        self.away_team = self.gamedata['away_team_id']
+        self.home_team = self.gamedata['home_team_id']
+        self.date_played = self.gamedata['date_played']
 
 
     def go(self):
         home_units = self.getHomeFiveManUnit()
         away_units = self.getAwayFiveManUnit()
 
+        print json.dumps(home_units)
 
-        self._saveToDatabase(away_units, home_units)
+        #self._saveToDatabase(away_units, home_units)
 
         print "Successfully identified five man units!"
         return True
@@ -41,14 +43,17 @@ class FiveMan:
     def _getCurrentPlayers(self, team):
         sql = """ 
             SELECT id
-            FROM player 
-            WHERE start_date <= '%s' and (end_date >= '%s' OR end_date IS NULL) AND team_code = '%s'
+            FROM nba_staging.player_resolved_test
+            WHERE team_id = '%s'
         """ % (self.date_played, self.date_played, team)
         return [itm[0] for itm in db.nba_query(sql)]
 
 
     def _getNumberOfPeriods(self):
-        return db.nba_query("SELECT MAX(period) FROM pbptest WHERE game_id = %s  and period <= 4" % self.game_id)[0][0]
+        return db.nba_query("""
+            SELECT MAX(period) FROM nba_staging.playbyplay_espn 
+            WHERE game_id = %s  and period <= 4
+        """ % self.game_id)[0][0]
 
 
     def _guessFiveManUnits(self, data, period_count, team_code, known_players):
@@ -168,9 +173,9 @@ class FiveMan:
                 """ % (','.join(map(str,row['unit'])), self.game_id, row['play_number'], row['period']))
 
 
-def main(game_id = 100):
-    gamedata = db.nba_query("SELECT id, away_team, home_team, date_played FROM game WHERE id = %s" % game_id)
-    obj = FiveMan(*gamedata[0])
+def main(game_id = 1500):
+    gamedata = db.nba_query_dict("SELECT * FROM game WHERE id = %s" % game_id)
+    obj = FiveMan(gamedata[0])
     
     obj.go()
 

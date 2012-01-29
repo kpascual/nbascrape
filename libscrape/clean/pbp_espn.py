@@ -20,7 +20,7 @@ LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
 class Clean:
 
-    def __init__(self, filename, gamedata):
+    def __init__(self, filename, gamedata, dbobj):
         self.filename = filename
         self.gamedata = gamedata
         self.away_team = self.gamedata['away_team_id']
@@ -28,6 +28,7 @@ class Clean:
         self.game_name = self.gamedata['abbrev']
         self.game_id = self.gamedata['id']
         self.date_played = self.gamedata['date_played']
+        self.db = dbobj
 
         self.known_plays = self._getKnownPlays()
         #self.plays = [line.replace('\n','').split(',') for line in open(LOGDIR_EXTRACT + filename,'r').readlines()]
@@ -54,7 +55,7 @@ class Clean:
     def tempDbInsert(self, data):
         for line in data:
             sql = "INSERT INTO pbptest (%s) VALUES (%s)" % (','.join(line.keys()),"'%s'" % "','".join(map(str,line.values())))
-            db.nba_query(sql)
+            self.db.query(sql)
 
 
     def guessUnknownQuarters(self, plays):
@@ -69,17 +70,18 @@ class Clean:
     
 
     def _getConformedTimes(self):
-        return db.nba_query_dict("SELECT * FROM dim_times")
+        return self.db.query_dict("SELECT * FROM dim_times")
 
 
     def replaceWithConformedTime(self, plays):
-        conformed_times = self._getConformedTimes()
+        #conformed_times = self._getConformedTimes()
         cleaned = []
         for (period, idx, time_left, away_score, home_score, away_play, home_play) in plays:
-            found = [(itm['period'], itm['sec_elapsed_game']) for itm in conformed_times if itm['period_name'] == period and itm['time_left'] == time_left][0]
-            period = found[0]
-            time_left = found[1]
-            cleaned.append((period, idx, time_left, away_score, home_score, away_play, home_play)) 
+            #found = [(itm['period'], itm['sec_elapsed_game']) for itm in conformed_times if itm['period_name'] == period and itm['time_left'] == time_left][0]
+            #period = found[0]
+            #time_left = found[1]
+            new_time_left = (int(time_left.split(':')[0]) * 60 + int(time_left.split(':')[1])) * 10
+            cleaned.append((period, idx, new_time_left, away_score, home_score, away_play, home_play)) 
     
         return cleaned
 
@@ -124,7 +126,7 @@ class Clean:
 
 
     def _getKnownPlays(self):
-        return db.nba_query("SELECT id,re,name FROM play ORDER BY priority ASC, id ASC")
+        return self.db.query("SELECT id,re,name FROM play_espn ORDER BY priority ASC, id ASC")
 
 
     def _findPlay(self,away_play,home_play):
@@ -176,10 +178,10 @@ class Clean:
 
 
     def _getPlayerIdsInGame(self):
-        players = db.nba_query_dict("""
+        players = self.db.query_dict("""
             SELECT p.*
-            FROM nba_staging.player_resolved_test p
-                INNER JOIN nba_staging.player_nbacom_by_game g ON g.nbacom_player_id = p.nbacom_player_id
+            FROM player_resolved_test p
+                INNER JOIN player_nbacom_by_game g ON g.nbacom_player_id = p.nbacom_player_id
             WHERE g.game_id = %s
         """ % (self.gamedata['id']))
         # Index by nbacom_player_id

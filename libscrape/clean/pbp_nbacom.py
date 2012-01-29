@@ -13,8 +13,9 @@ LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
 class Clean:
 
-    def __init__(self, xml):
+    def __init__(self, xml, dbobj):
         self.xml = xml
+        self.qry = qryobj
 
 
     def getPlayByPlayData(self):
@@ -35,7 +36,16 @@ class Clean:
         return total_secs
 
 
-    def _getPlayerId(self, player_code):
+    def resolvePlayer(self, player_code):
+        pass
+
+    
+    def _resolveTeam(self, nbacom_team_code):
+        team = self.qry.query("SELECT * FROM team WHERE nbacom_code = '%s'" % (nbacom_team_code))
+        return team[0][0]
+
+
+    def _getExistingPlayerId(self, player_code):
         pass
 
 

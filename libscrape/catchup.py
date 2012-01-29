@@ -18,9 +18,9 @@ def fillFiveman():
 
 def main():
 
-    last = datetime.date(2010,10,31)
+    last = datetime.date(2012,1,24)
 
-    first = datetime.date(2010,10,25)
+    first = datetime.date(2012,1,18)
 
     while first < last:
         master.restartFromExtract(first)
