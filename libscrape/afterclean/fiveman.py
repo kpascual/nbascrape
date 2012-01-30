@@ -1,17 +1,25 @@
 from libscrape.config import db
-
+import json
 
 class FiveMan:
-    def __init__(self, game_id, away_team, home_team, date_played):
-        self.game_id = game_id
-        self.away_team = away_team 
-        self.home_team = home_team
-        self.date_played = date_played
+    def __init__(self, gamedata):
+        self.gamedata = gamedata
+        self.game_id = self.gamedata['id']
+        self.away_team = self.gamedata['away_team_id']
+        self.home_team = self.gamedata['home_team_id']
+        self.date_played = self.gamedata['date_played']
 
 
     def go(self):
-        self.getHomeFiveManUnit()
-        self.getAwayFiveManUnit()
+        home_units = self.getHomeFiveManUnit()
+        away_units = self.getAwayFiveManUnit()
+
+        print json.dumps(home_units)
+
+        #self._saveToDatabase(away_units, home_units)
+
+        print "Successfully identified five man units!"
+        return True
 
 
     def getHomeFiveManUnit(self):
@@ -35,63 +43,89 @@ class FiveMan:
     def _getCurrentPlayers(self, team):
         sql = """ 
             SELECT id
-            FROM player 
-            WHERE start_date <= '%s' and (end_date >= '%s' OR end_date IS NULL) AND team_code = '%s'
+            FROM nba_staging.player_resolved_test
+            WHERE team_id = '%s'
         """ % (self.date_played, self.date_played, team)
         return [itm[0] for itm in db.nba_query(sql)]
 
 
     def _getNumberOfPeriods(self):
-        return db.nba_query("SELECT MAX(period) FROM pbptest WHERE game_id = %s  and period <= 4" % self.game_id)[0][0]
+        return db.nba_query("""
+            SELECT MAX(period) FROM nba_staging.playbyplay_espn 
+            WHERE game_id = %s  and period <= 4
+        """ % self.game_id)[0][0]
 
 
-    def _guessFiveManUnits(self, data, periods, team_code, players):
+    def _guessFiveManUnits(self, data, period_count, team_code, known_players):
+
+        PLAY_ID_PLAYER_ENTERS   = 48
+        PLAY_ID_FOUL            = 93
 
         # Split data into respective periods
         data_by_periods = []
-        for i in range(1,periods+1):
-            data_by_periods.append([itm for itm in data if itm['period'] == i])
+        for i in range(1,period_count+1):
+            data_by_periods.append([play_data for play_data in data if play_data['period'] == i])
 
-        print "Number of periods: %s,%s" % (periods, len(data_by_periods))
 
         all_units = []
-        for per in data_by_periods:
-            list_units = [] 
+        for data_in_period in data_by_periods:
+            units_in_period = [] 
             
-            # Create unit list for every quarter/period
-            for itm in per: 
-                switches = ()
-                if not list_units or itm['period'] != list_units[-1][1]:
-                    this_unit = []
+            # Go through every play in each period, and identify the five man unit
+            for play_data in data_in_period: 
+                switches = {}
+                
+                if units_in_period and play_data['period'] == units_in_period[-1]['period']:
+                    fiveman_unit = [p for p in units_in_period[-1]['unit']]
                 else:
-                    this_unit = [p for p in list_units[-1][2]]
-        
-                for player in [itm['player_id'],itm['player1_id'],itm['player2_id'],itm['assist_player_id']]:
-                    
-                    if player in players and player not in this_unit:
-                        this_unit.append(player)
-                        if itm['play_id'] != 48:
-                            list_units = self._backfillIfPlayerDoesntExist(player, list_units)
+                    fiveman_unit = []
+       
+
+                # Check if any players found in the play description aren't already in the 
+                # five man unit
+                players_in_play = [
+                    play_data['player_id'],
+                    play_data['player1_id'],
+                    play_data['player2_id'],
+                    play_data['assist_player_id']
+                ] 
+                for player in players_in_play:
+                    if player in known_players and player not in fiveman_unit and play_data['play_id'] != PLAY_ID_FOUL:
+                        fiveman_unit.append(player)
+
+                        # Additionally, if they didn't just enter, backfill the prior plays with the player
+                        if play_data['play_id'] != PLAY_ID_PLAYER_ENTERS:
+                            units_in_period = self._backfillPlayerInPriorPlays(player, units_in_period)
+
 
                 # Play Id for players entering & exiting game
                 # Handle enter/exits
-                if itm['play_id'] == 48 and itm['team_code'] == team_code: 
+                if play_data['play_id'] == PLAY_ID_PLAYER_ENTERS and play_data['team_code'] == team_code: 
                 
                     try:
-                        this_unit.remove(itm['player2_id']) 
-
-                        for i,prev_data in enumerate(reversed(list_units)):
-                            if itm['player2_id'] not in prev_data[2]: 
-                                idx = len(list_units) - 1 - i
-                                list_units[idx][2].append(itm['player2_id'])
+                        fiveman_unit.remove(play_data['player2_id']) 
+                        
+                        units_in_period = self._backfillPlayerInPriorPlays(play_data['player2_id'], units_in_period)
+                        """
+                        for play_index, prev_data in enumerate(reversed(units_in_period)):
+                            if play_data['player2_id'] not in prev_data['unit']: 
+                                idx = len(units_in_period) - 1 - play_index
+                                units_in_period[idx]['unit'].append(play_data['player2_id'])
                             else:
                                 break 
-                        switches = (itm['player_id'],itm['player2_id'])
+                        """
+                        switches = {'enter':play_data['player_id'], 'exit':play_data['player2_id']}
                     except:
-                        print "Couldn't find player %s.  Should this person be added into prior list?" % itm['player2_id']	
-                list_units.append((itm['play_num'],itm['period'],this_unit[:],switches))
-
-            all_units.append(list_units)
+                        print "Couldn't find player %s.  Should this person be added into prior list?" % play_data['player2_id']	
+                new_data = {
+                    'play_number':play_data['play_num'],
+                    'period':play_data['period'],
+                    'unit':fiveman_unit,
+                    'switches':switches
+                }
+                units_in_period.append(new_data)
+                
+            all_units.append(units_in_period)
 
         return all_units
 
@@ -100,20 +134,48 @@ class FiveMan:
         pass    
 
 
-    def _backfillIfPlayerDoesntExist(self, player, list_units):
-        for i, prev_data in enumerate(reversed(list_units)):
-            if player in prev_data[2] or (prev_data[3] and player ==  prev_data[3][0]):
+    def _backfillPlayerInPriorPlays(self, player_id, list_units):
+        for play_index, prev_data in enumerate(reversed(list_units)):
+            if player_id in prev_data['unit'] or (prev_data['switches'] and player_id ==  prev_data['switches']['enter']):
                 break
             else:
-                idx = len(list_units) - 1 - i
-                list_units[idx][2].append(player)
+                idx = len(list_units) - 1 - play_index
+                list_units[idx]['unit'].append(player_id)
         
         return list_units
 
 
-def main(game_id = 10):
-    gamedata = db.nba_query("SELECT id, away_team, home_team, date_played FROM game WHERE id = %s" % game_id)
-    obj = FiveMan(*gamedata[0])
+    def _removePlayerFromPriorPlays(self, player_id, units_in_period):
+
+        for play_index, prev_data in enumerate(reversed(units_in_period)):
+            if player_id not in prev_data['unit']: 
+                idx = len(units_in_period) - 1 - play_index
+                units_in_period[idx]['unit'].append(play_data['player2_id'])
+            else:
+                break 
+        switches = (play_data['player_id'],play_data['player2_id'])
+
+
+    def _saveToDatabase(self, away_fiveman, home_fiveman):
+
+        # Away fiveman unit
+        for quarter_row in away_fiveman:
+            for row in quarter_row:
+                db.nba_query("""
+                    UPDATE pbp2 SET away_fiveman = '%s' WHERE game_id = %s AND play_num = %s AND period = %s
+                """ % (','.join(map(str,row['unit'])), self.game_id, row['play_number'], row['period']))
+
+        # home fiveman unit
+        for quarter_row in home_fiveman:
+            for row in quarter_row:
+                db.nba_query("""
+                    UPDATE pbp2 SET home_fiveman = '%s' WHERE game_id = %s AND play_num = %s AND period = %s
+                """ % (','.join(map(str,row['unit'])), self.game_id, row['play_number'], row['period']))
+
+
+def main(game_id = 1500):
+    gamedata = db.nba_query_dict("SELECT * FROM game WHERE id = %s" % game_id)
+    obj = FiveMan(gamedata[0])
     
     obj.go()
 

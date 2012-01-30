@@ -5,6 +5,9 @@ import datetime
 from libscrape.config import db
 
 
+# A script that scrapes ESPN.com's scoreboard to retrieve ESPN's game_id and store into MySQL db
+
+
 def getScoreboardDoc(dt): 
     url = 'http://espn.go.com/nba/scoreboard?date=%s' % dt.isoformat().replace('-','')
     response = urllib2.urlopen(url)
@@ -13,12 +16,12 @@ def getScoreboardDoc(dt):
 
 def getGameIdsAndTeams(html):
     soup = BeautifulSoup(html)
-    links = soup.findAll(href=re.compile("/nba/photos.*"))
+    links = soup.findAll(href=re.compile("/nba/conversation.*"))
     links = list(set(links))
     
     game_ids = []
     for l in links:
-        match = re.search("/nba/photos\?gameId=(?P<game_id>[0-9]+)$",l['href'])
+        match = re.search("/nba/conversation\?gameId=(?P<game_id>[0-9]+)$",l['href'])
         
         if match:
             found = match.groupdict()
@@ -83,13 +86,26 @@ def _writeToDatabase(games, date_played):
         db.nba_query(sql_update_nbacom)
 
 
+def fillInAllDates():
+    current_date = datetime.date(2012,2,27)
+
+    last_date = datetime.date(2012,4,26)
+
+    while current_date <= last_date:
+        print current_date
+        main(current_date)
+
+        current_date = current_date + datetime.timedelta(days=1)
+
+
 def main(dt):
     
     html = getScoreboardDoc(dt)
     gamedata = getGameIdsAndTeams(html)
     complete_gamedata = _fillInGameData(gamedata, dt)
+
     _writeToDatabase(complete_gamedata, dt)
 
 
 if __name__ == '__main__':
-    main(datetime.date.today())
+    fillInAllDates()

@@ -5,9 +5,9 @@ import datetime
 def main():
 
     #last = datetime.date.today() - datetime.timedelta(days=1)
-    last = datetime.date(2010,10,28)
+    last = datetime.date(2011,2,25)
 
-    first = datetime.date(2010,10,25)
+    first = datetime.date(2010,11,11)
 
     while first < last:
         master.restartFromExtract(first)
