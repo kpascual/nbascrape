@@ -4,7 +4,6 @@ from libscrape.config import db
 from libscrape.config import constants
 
 
-tables = db.tables
 LOGDIR_LOAD = constants.LOGDIR_LOAD
 LOGDIR_CLEAN = constants.LOGDIR_CLEAN
 
@@ -20,7 +19,7 @@ class Load:
         str_fields = open(constants.LOGDIR_CLEAN + f, 'r').readline()
         sql = """
             LOAD DATA LOCAL INFILE '%s' REPLACE
-            INTO TABLE %s
+            INTO TABLE shotchart_cbssports
             FIELDS TERMINATED BY ','
             LINES TERMINATED BY '\n'
             IGNORE 1 LINES
@@ -34,7 +33,7 @@ class Load:
         str_fields = open(constants.LOGDIR_CLEAN + f, 'r').readline()
         sql = """
             LOAD DATA LOCAL INFILE '%s' REPLACE
-            INTO TABLE %s
+            INTO TABLE playbyplay_espn
             FIELDS TERMINATED BY ','
             LINES TERMINATED BY '\n'
             IGNORE 1 LINES
@@ -48,7 +47,7 @@ class Load:
         str_fields = open(constants.LOGDIR_CLEAN + f, 'r').readline()
         sql = """
             LOAD DATA LOCAL INFILE '%s' REPLACE
-            INTO TABLE %s
+            INTO TABLE boxscore_cbssports
             FIELDS TERMINATED BY ','
             LINES TERMINATED BY '\n'
             IGNORE 1 LINES
@@ -61,7 +60,7 @@ class Load:
         shots = json.loads(open(LOGDIR_CLEAN + f,'r').readline())
         for shot in shots:
             sql = """
-                INSERT INTO nba_staging.shotchart_nbacom
+                INSERT INTO shotchart_nbacom
                 (game_id, player_id, x, y, nbacom_play_type_id, nbacom_play_num, period, deciseconds_left, team_id,  is_shot_made) VALUES
                 (%s, %s, "%s", "%s", %s, %s, %s, %s, %s, %s)
             """ % (
@@ -77,7 +76,7 @@ class Load:
         for line in data:
             print line 
             sql = """
-                INSERT INTO nba_staging.boxscore_nbacom
+                INSERT INTO boxscore_nbacom
                 (game_id, player_id, is_dnp, time_played, sec_played, fgm, fga, threeptm, threepta, ftm, fta,
                 off_reb, def_reb, total_reb, assists, personal_fouls, steals, turnovers, blocks, blocks_against, 
                 plusminus, total_points, unknown12)
@@ -100,7 +99,7 @@ class Load:
         shots = json.loads(open(LOGDIR_CLEAN + f,'r').readline())
         for shot in shots:
             sql = """
-                INSERT INTO nba_staging.shotchart_espn
+                INSERT INTO shotchart_espn
                 (game_id, player_id, x, y, shot_type, espn_play_num, period, deciseconds_left, team_id,  is_shot_made, distance)
                 VALUES
                 (%s, %s, "%s", "%s", "%s", %s, %s, %s, %s, %s, %s)
