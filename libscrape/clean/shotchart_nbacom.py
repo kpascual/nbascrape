@@ -1,14 +1,12 @@
 from BeautifulSoup import BeautifulStoneSoup
 import csv
 import os
-import logging
 import datetime
 import json
 from libscrape.config import db
 from libscrape.config import constants 
 
 
-logging.basicConfig(format='%(asctime)s %(message)s',filename='espn_shotchart.log')
 
 LOGDIR_CLEAN = constants.LOGDIR_CLEAN
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT

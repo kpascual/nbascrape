@@ -11,7 +11,6 @@ from libscrape.config import constants
 
 from shotchart import ShotChart
 
-logging.basicConfig(format='%(asctime)s %(message)s',filename='espn_shotchart.log')
 
 LOGDIR_CLEAN = constants.LOGDIR_CLEAN
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT

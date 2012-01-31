@@ -1,7 +1,5 @@
 import re
 import datetime
-import logging
-import logging.config
 import csv
 import difflib
 import json
@@ -13,8 +11,6 @@ from libscrape.config import constants
 LOGDIR_CLEAN = constants.LOGDIR_CLEAN
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
-#logging.config.fileConfig("logging.conf")
-#logger = logging.getLogger("play")
 
 
 
@@ -158,7 +154,6 @@ class Clean:
                 return (self.home_team, play_id, othervars)
 
         print "No play found: %s" % play
-        #logger.info("No play found: %s" % play)
         return 0
 
 

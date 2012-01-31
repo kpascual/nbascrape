@@ -4,7 +4,7 @@ from libscrape.config import db
 from libscrape.config import constants
 
 
-tables = db.test_tables
+tables = db.tables
 LOGDIR_LOAD = constants.LOGDIR_LOAD
 LOGDIR_CLEAN = constants.LOGDIR_CLEAN
 

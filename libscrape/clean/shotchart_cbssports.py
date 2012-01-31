@@ -1,5 +1,3 @@
-import logging
-import logging.config
 import csv
 
 from libscrape.config import db
@@ -7,8 +5,6 @@ from libscrape.config import constants
 import libscrape.config.constants
 
 
-logging.config.fileConfig('logging.conf')
-logger = logging.getLogger("clean")
 
 LOGDIR_CLEAN = constants.LOGDIR_CLEAN
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
@@ -109,7 +105,6 @@ class CleanShots:
                 found = [itm['sec_elapsed_game'] for itm in conformed_times if itm['period'] == period and itm['sec_left_period'] == time_left][0]
                 time_elapsed = found
             except:
-                logger.warn("time not found! period: %s, time: %s, counter: %s" % (period,time_left,i))
                 time_elapsed = -1
             """
             cleaned.append((i,team,new_time_left,period,player_id,shot_type,result,x,y,distance))
