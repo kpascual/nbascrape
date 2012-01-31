@@ -1,5 +1,3 @@
-import logging
-import logging.config
 import csv
 
 from libscrape.config import db
@@ -7,8 +5,6 @@ from libscrape.config import constants
 import libscrape.config.constants
 
 
-logging.config.fileConfig('logging.conf')
-logger = logging.getLogger("clean")
 
 LOGDIR_CLEAN = constants.LOGDIR_CLEAN
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT

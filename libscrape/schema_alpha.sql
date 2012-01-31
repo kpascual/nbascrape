@@ -526,6 +526,46 @@ CREATE TABLE `player_espn` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `player_nbacom`
+--
+
+DROP TABLE IF EXISTS `player_nbacom`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `player_nbacom` (
+  `id` int(11) NOT NULL DEFAULT '0',
+  `nbacom_player_id` varchar(20) DEFAULT NULL,
+  `player_tag` varchar(50) DEFAULT NULL,
+  `last_name` varchar(50) DEFAULT NULL,
+  `first_name` varchar(50) DEFAULT NULL,
+  `date_found` date DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `updated_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `player_nbacom_by_game`
+--
+
+DROP TABLE IF EXISTS `player_nbacom_by_game`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `player_nbacom_by_game` (
+  `id` int(11) NOT NULL DEFAULT '0',
+  `game_id` int(11) DEFAULT NULL,
+  `nbacom_player_id` varchar(20) DEFAULT NULL,
+  `player_tag` varchar(50) DEFAULT NULL,
+  `last_name` varchar(50) DEFAULT NULL,
+  `first_name` varchar(50) DEFAULT NULL,
+  `jersey_number` tinyint(4) DEFAULT NULL,
+  `team` varchar(20) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `updated_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `player_resolved_test`
 --
 
@@ -775,4 +815,4 @@ CREATE TABLE `test` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-01-30  9:01:20
+-- Dump completed on 2012-01-30 13:20:30

@@ -14,7 +14,7 @@ class FiveMan:
         home_units = self.getHomeFiveManUnit()
         away_units = self.getAwayFiveManUnit()
 
-        print json.dumps(home_units)
+        #print json.dumps(home_units)
 
         #self._saveToDatabase(away_units, home_units)
 
@@ -23,16 +23,27 @@ class FiveMan:
 
 
     def getHomeFiveManUnit(self):
-        result = db.nba_query_dict("SELECT * FROM pbptest WHERE game_id = %s  ORDER BY period ASC, sec_elapsed_game ASC, play_num ASC" % self.game_id)
+        result = db.nba_query_dict("""
+            SELECT * 
+            FROM playbyplay_espn 
+            WHERE game_id = %s  
+            ORDER BY period ASC, sec_elapsed_game ASC, play_num ASC
+        """ % self.game_id)
         players = self._getCurrentPlayers(self.home_team) 
         total_periods = self._getNumberOfPeriods()
 
+        print players
         fiveman = self._guessFiveManUnits(result, total_periods, self.home_team, players)        
         return fiveman
 
 
     def getAwayFiveManUnit(self):
-        result = db.nba_query_dict("SELECT * FROM pbptest WHERE game_id = %s  ORDER BY period ASC, sec_elapsed_game ASC, play_num ASC" % self.game_id)
+        result = db.nba_query_dict("""
+            SELECT * 
+            FROM playbyplay_espn 
+            WHERE game_id = %s  
+            ORDER BY period ASC, sec_elapsed_game ASC, play_num ASC
+        """ % self.game_id)
         players = self._getCurrentPlayers(self.away_team) 
         total_periods = self._getNumberOfPeriods()
        
@@ -40,23 +51,24 @@ class FiveMan:
         return fiveman
 
 
-    def _getCurrentPlayers(self, team):
+    def _getCurrentPlayers(self, team_id):
         sql = """ 
-            SELECT id
-            FROM nba_staging.player_resolved_test
-            WHERE team_id = '%s'
-        """ % (self.date_played, self.date_played, team)
+            SELECT p.id
+            FROM player_nbacom_by_game nbacom
+                INNER JOIN player_resolved_test p ON p.nbacom_player_id = nbacom.nbacom_player_id
+            WHERE nbacom.team = %s AND nbacom.game_id = %s
+        """ % (team_id, self.game_id)
         return [itm[0] for itm in db.nba_query(sql)]
 
 
     def _getNumberOfPeriods(self):
         return db.nba_query("""
-            SELECT MAX(period) FROM nba_staging.playbyplay_espn 
+            SELECT MAX(period) FROM playbyplay_espn 
             WHERE game_id = %s  and period <= 4
         """ % self.game_id)[0][0]
 
 
-    def _guessFiveManUnits(self, data, period_count, team_code, known_players):
+    def _guessFiveManUnits(self, data, period_count, team_id, known_players):
 
         PLAY_ID_PLAYER_ENTERS   = 48
         PLAY_ID_FOUL            = 93
@@ -100,7 +112,7 @@ class FiveMan:
 
                 # Play Id for players entering & exiting game
                 # Handle enter/exits
-                if play_data['play_id'] == PLAY_ID_PLAYER_ENTERS and play_data['team_code'] == team_code: 
+                if play_data['play_id'] == PLAY_ID_PLAYER_ENTERS and play_data['team_id'] == team_id: 
                 
                     try:
                         fiveman_unit.remove(play_data['player2_id']) 
