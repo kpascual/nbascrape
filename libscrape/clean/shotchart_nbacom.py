@@ -62,7 +62,7 @@ class Clean:
             
 
     def _getPlayerIds(self):
-        players = self.db.query_dict("SELECT * FROM player_resolved_test")
+        players = self.db.query_dict("SELECT * FROM player")
         # Index by nbacom_player_id
     
         players_indexed = {}

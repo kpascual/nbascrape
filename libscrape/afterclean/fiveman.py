@@ -55,7 +55,7 @@ class FiveMan:
         sql = """ 
             SELECT p.id
             FROM player_nbacom_by_game nbacom
-                INNER JOIN player_resolved_test p ON p.nbacom_player_id = nbacom.nbacom_player_id
+                INNER JOIN player p ON p.nbacom_player_id = nbacom.nbacom_player_id
             WHERE nbacom.team = %s AND nbacom.game_id = %s
         """ % (team_id, self.game_id)
         return [itm[0] for itm in db.nba_query(sql)]
@@ -183,6 +183,16 @@ class FiveMan:
                 db.nba_query("""
                     UPDATE pbp2 SET home_fiveman = '%s' WHERE game_id = %s AND play_num = %s AND period = %s
                 """ % (','.join(map(str,row['unit'])), self.game_id, row['play_number'], row['period']))
+
+def brainstorm():
+    play = {
+        'id':''
+    }
+
+    players = {
+        'player1_id':{'enter':'','exit':'32','status':'in|out'},
+        'player2_id':{'enter':'15','exit':'','status':'in|out'}
+    }
 
 
 def main(game_id = 1500):

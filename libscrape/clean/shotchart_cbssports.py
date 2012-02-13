@@ -1,4 +1,5 @@
 import csv
+import json
 
 from libscrape.config import db
 from libscrape.config import constants 
@@ -22,10 +23,8 @@ class CleanShots:
         self.db = dbobj
 
         self.players = [line for line in csv.reader(open(LOGDIR_EXTRACT + self.filename + '_players','r'),delimiter=',',lineterminator='\n')]
-        self.shots = [line for line in csv.reader(open(LOGDIR_EXTRACT + self.filename + '_shots','r'),delimiter=',',lineterminator='\n')]
+        self.shots = self._getShots()
 
-        self.finalfields = ['shot_num','team_id','deciseconds_left','period','player_id',
-                            'shot_type_id','is_shot_made','x','y','distance','game_id']
 
     def clean(self):
 
@@ -35,15 +34,27 @@ class CleanShots:
         cleaned3 = self.adjustXYCoordinates(cleaned2)
         cleaned4 = self.resolvePlayerId(cleaned3)
         cleaned5 = self.addGameId(cleaned4)
-
+        
         self._dumpIntoFile(cleaned5)
 
     
-    def _dumpIntoFile(self, plays):
-        
-        writer = csv.writer(open(LOGDIR_CLEAN + self.filename,'wb'),delimiter=',',lineterminator='\n')
-        writer.writerows([self.finalfields] + plays)
-        
+    def _dumpIntoFile(self, shots):
+        f = open(LOGDIR_CLEAN + self.filename,'wb')
+        f.write(json.dumps(shots))
+
+
+    def _getShots(self):
+        filename = LOGDIR_EXTRACT + self.filename + '_shots'
+        data = [line for line in csv.reader(open(filename,'r'),delimiter=',',lineterminator='\n')]
+        headers = ['shot_num','team_code','time_left','period','cbssports_player_id','shot_type_cbssports_id','is_shot_made','x','y','distance']
+
+        all_data = []
+        for line in data:
+            final_data = dict(zip(headers,line))
+            all_data.append(final_data)
+
+        return all_data
+ 
 
     def adjustFourthPeriod(self, data):
 
@@ -51,63 +62,44 @@ class CleanShots:
         last_period = 1
         current_period = 1
         last_seconds = 7201
-        for counter, (i,team,time_left,period,player_id,shot_type,result,x,y,distance) in enumerate(data):
+        for counter, line in enumerate(data):
 
-            new_time = time_left.split(':')
+            new_time = line['time_left'].split(':')
             if len(new_time) == 2:
                 new_seconds = int(int(new_time[0])*60 + int(new_time[1])) * 10
+                line['deciseconds_left'] = int(int(new_time[0])*60 + int(new_time[1])) * 10
             else:
-                new_seconds = int(float(time_left) * 10)
+                line['deciseconds_left'] = int(float(line['time_left']) * 10)
 
             if last_seconds < new_seconds and new_seconds - last_seconds > 1500:
                 if int(last_period) >= 3:
                     current_period = current_period + 1
                 else:
-                    current_period = int(period)
- 
+                    current_period = int(line['period'])
+
+            line['period'] = current_period 
+
             last_period = current_period
             last_seconds = new_seconds
-            
 
-            cleaned.append((i,team,new_seconds,current_period,player_id,shot_type,result,x,y,distance))
+            del line['time_left']
+           
+            cleaned.append(line) 
 
         return cleaned
 
 
-    def adjustXYCoordinates(self, plays):
+    def adjustXYCoordinates(self, shots):
         cleaned = []
-        for (i,team,time_left,period,player_id,shot_type,result,x,y,distance) in plays:
-            adjusted_x = int(x) * 10
+        for line in shots:
+            line['x'] = int(line['x']) * 10
 
-            if team == self.away_team:
-                adjusted_y = (47 - int(y)) * 10
+            if line['team_id'] == self.away_team:
+                line['y'] = (47 - int(line['y'])) * 10
             else:
-                adjusted_y = (47 + int(y)) * 10
+                line['y'] = (47 + int(line['y'])) * 10
 
-            cleaned.append((i,team,time_left,period,player_id,shot_type,result,adjusted_x,adjusted_y,distance))
-
-        return cleaned
-        
-    def _getConformedTime(self):
-        return self.db.query_dict("SELECT * FROM dim_times")
-
-
-    def replaceWithConformedTime(self, plays):
-        conformed_times = self._getConformedTime()
-        cleaned = []
-        for (i,team,time_left,period,player_id,shot_type,result,x,y,distance) in plays:
-            print time_left
-            mins, secs = time_left.split(':')
-
-            new_time_left = (int(mins) * 60 + int(secs)) * 10
-            """
-            try:
-                found = [itm['sec_elapsed_game'] for itm in conformed_times if itm['period'] == period and itm['sec_left_period'] == time_left][0]
-                time_elapsed = found
-            except:
-                time_elapsed = -1
-            """
-            cleaned.append((i,team,new_time_left,period,player_id,shot_type,result,x,y,distance))
+            cleaned.append(line)
 
         return cleaned
 
@@ -115,13 +107,15 @@ class CleanShots:
     def adjustTeam(self, data):
         # Team: 0 = Away Team, 1 = Home team
         cleaned = []
-        for i,team,time_left,period,player_id,shot_type,result,x,y,distance in data:
-            if int(team) == 0:
-                team = self.away_team
+        for line in data:
+            if int(line['team_code']) == 0:
+                line['team_id'] = self.away_team
             else:
-                team = self.home_team
+                line['team_id'] = self.home_team
             
-            cleaned.append((i,team,time_left,period,player_id,shot_type,result,x,y,distance))
+            del line['team_code']
+            
+            cleaned.append(line)
 
         return cleaned
 
@@ -130,20 +124,21 @@ class CleanShots:
         players = self._getPlayerIdsInGame()
         
         cleaned = []
-        for i,team,time_left,period,cbssports_player_id,shot_type,result,x,y,distance in data:
+        for line in data:
             
             try:
-                new_player_id = players[int(cbssports_player_id)]
+                line['player_id'] = players[int(line['cbssports_player_id'])]
             except:
-                new_player_id = 0
+                line['player_id'] = 0
             
-            cleaned.append((i,team,time_left,period,new_player_id,shot_type,result,x,y,distance))
+            del line['cbssports_player_id']
+            cleaned.append(line)
 
         return cleaned 
 
 
     def _getPlayerIdsInGame(self):
-        players = self.db.query_dict("SELECT * FROM player_resolved_test")
+        players = self.db.query_dict("SELECT * FROM player")
         # Index by nbacom_player_id
     
         players_indexed = {}
@@ -155,9 +150,9 @@ class CleanShots:
          
     def addGameId(self, data):
         cleaned = []
-        for tup in data:
-            new = list(tup) + [self.game_id]
-            cleaned.append(new)
+        for line in data:
+            line['game_id'] = self.game_id
+            cleaned.append(line)
 
         return cleaned
 

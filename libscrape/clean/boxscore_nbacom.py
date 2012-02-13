@@ -34,8 +34,11 @@ class CleanBoxScore:
     def getOfficials(self):
         soupofficials = self.soup.find("officials")
         
-        officials = dict(soupofficials.attrs)['nm'].split('|')
-        print officials
+        officials = dict(soupofficials.attrs)['nm'].split('^')
+
+        for official in officials:
+            print official
+        
 
 
     def getPlayerLines(self):
@@ -144,7 +147,7 @@ class CleanBoxScore:
         
 
     def _getExistingPlayerIds(self):
-        players = self.db.query_dict("SELECT * FROM player_resolved_test")
+        players = self.db.query_dict("SELECT * FROM player")
         # Index by nbacom_player_id
     
         players_indexed = {}
@@ -177,14 +180,15 @@ def main():
     files = [f for f in os.listdir(LOGDIR_EXTRACT) if '2011-12' in f and 'boxscore' in f]
     f = '2012-01-18_OKC@WAS_boxscore_nbacom'
 
-    gamedata = db.nba_query_dict("SELECT * FROM game where date_played = '2012-01-18'") 
+    gamedata = db.nba_query_dict("SELECT * FROM game where date_played <= '2012-02-10'") 
+    dbobj = db.Db(db.dbconn_nba)
 
-    for g in gamedata:
-        print g['abbrev']
-        f = g['abbrev'] + '_boxscore_nbacom'
+    for game in gamedata:
+        #print game['abbrev']
+        filename = game['abbrev'] + '_boxscore_nbacom'
 
-        obj = CleanBoxScore(f, g)
-        obj.clean()
+        obj = CleanBoxScore(filename, game, dbobj)
+        obj.getOfficials()
     
 
 if __name__ == '__main__':

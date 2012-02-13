@@ -18,10 +18,6 @@ class Extract:
         
         self.table = self.soup.find(attrs={'class':'mod-data'})
         self.numberedrows = [(i,row) for i,row in enumerate(self.table.findAll('tr'))]
-        self.rows = [row for i, row in self.numberedrows]
-
-        self.backup_periods = self.makeBackupPeriodRanges()
-        self.periods = self.getPeriodIndexes()
 
         self.home_team_city = self.gamedata['home_team_city']
         self.away_team_city = self.gamedata['away_team_city']
@@ -35,7 +31,7 @@ class Extract:
     def extractAll(self):
         timeouts = self.getTimeouts()
         plays = self.getPlayData() 
-        periods = dict(self.getPeriodRanges())
+        periods = self.getPeriodRanges()
         allplays = sorted(timeouts + plays)
 
         plays_with_quarters = []
@@ -48,72 +44,79 @@ class Extract:
         return plays_with_quarters 
 
 
-    def getTeamNames(self):
-        home = [row.findAll('th')[3].renderContents() for i, row in self.numberedrows if len(row.findAll('td')) == 0]
-        away = [row.findAll('th')[1].renderContents() for i, row in self.numberedrows if len(row.findAll('td')) == 0]
-
-
-        return (list(set(away))[0], list(set(home))[0])
-
 
     def getPeriodIndexes(self):
-        cells = [[i] + map(lambda x: x.renderContents(),row.findAll('td')) for i,row in self.numberedrows if len(row.findAll('td')) == 2]
-        periods = [line for line in cells if 'Start of the' in line[2] or 'End of the' in line[2] or 'End Game' in line[1]]
+        period_data = [[play_number] + map(lambda tablecell: tablecell.renderContents(),row.findAll('td')) for play_number, row in self.numberedrows if len(row.findAll('td')) == 2]
+        periods = [line for line in period_data if 'Start of the' in line[2] or 'End of the' in line[2] or 'End Game' in line[1]]
 
-        dict_periods = {}
-        for (i, cell1, cell2) in periods:
+        # Get the start and ending play numbers for each period in the game
+        # Ex. for the 1st quarter, get the play indexes 2 and 140
+        period_startend = {}
+        for (play_number, cell1, cell2) in periods:
             match = re.search('((?P<startorend>(Start|End)))\s+of\s+the\s+(?P<quarter>[0-9])(st|nd|rd|th)\s+(?P<period>(Quarter|Overtime))',cell2)
             if match:
                 period_name = '%s %s' % (match.group('quarter'), match.group('period'))
-                if period_name not in dict_periods.keys():
-                    dict_periods[period_name] = {match.group('startorend').lower():i}
+                period_number = constants.PERIODS.index(period_name)
+
+                # This variable will be either 'start' or 'end'
+                startorend = match.group('startorend').lower()
+                if period_number not in period_startend.keys():
+                    period_startend[period_number] = {startorend: play_number}
                 else:
-                    dict_periods[period_name][match.group('startorend').lower()] = i
+                    period_startend[period_number][startorend] = play_number
      
-        cleaned = self.cleanMissingPeriodRanges(dict_periods)
+        cleaned = self.cleanMissingPeriodRanges(period_startend)
         return cleaned
 
 
     def cleanMissingPeriodRanges(self, periods):
+        backup_periods = self.makeBackupPeriodRanges()
+
         cleaned_periods = {}
-        for period, vals in periods.items():
+        for period_number, vals in periods.items():
             cleaned = {'start': 0, 'end': 0}
             if 'start' not in vals.keys(): 
-                cleaned['start'] = self.backup_periods[period]['start']
+                cleaned['start'] = backup_periods[period_number]['start']
             if 'end' not in vals.keys():
-                cleaned['end'] = self.backup_periods[period]['end']
+                cleaned['end'] = backup_periods[period_number]['end']
 
             cleaned.update(vals)
-            cleaned_periods[period] = cleaned
+            cleaned_periods[period_number] = cleaned
             del cleaned
 
         return cleaned_periods
 
 
     def getPeriodRanges(self):
-        period_index = [sorted((index,key)) for key,vals in self.periods.items() for index in range(vals['start'],vals['end']+1)]
+
+        periods = self.getPeriodIndexes()
+        newdata = []
+        for key, vals in periods.items():
+            for play_index in range(vals['start'], vals['end'] + 1):
+                newdata.append((play_index, key))
  
-        return period_index
+        return dict(newdata)
 
         
     def makeBackupPeriodRanges(self):
         periods = []
         dict_periods = {}
 
-        rows = [(i, t.renderContents()) for i, row in self.numberedrows for t in row.findAll('td') if len(row.findAll('td')) == 1]
-        for i,row in rows:
+        rows = [(play_number, t.renderContents()) for play_number, row in self.numberedrows for t in row.findAll('td') if len(row.findAll('td')) == 1]
+        for play_number,row in rows:
             match = re.search('.*(?P<num>\d)(st|nd|rd|th)\s+(?P<period_type>(Quarter|Overtime))\s+Summary.*',row)
             if match:
                 period_name = "%s %s" % (match.group('num'), match.group('period_type'))
-                period_id = constants.PERIODS.index(period_name)
-                periods.append((period_id, i, period_name))
+                period_number = constants.PERIODS.index(period_name)
+                periods.append((period_number, play_number, period_name))
 
-        for (period_id, idx, period_name) in sorted(periods):
-            dict_periods[period_name] = {'start':idx}
+        for period_number, play_number, period_name in sorted(periods):
+
+            dict_periods[period_number] = {'start': play_number}
             try:
-                dict_periods[period_name]['end'] = [itm[1] for itm in sorted(periods) if itm[0] == period_id + 1][0] - 1
+                dict_periods[period_number]['end'] = [itm[1] for itm in sorted(periods) if itm[0] == period_number + 1][0] - 1
             except:
-                dict_periods[period_name]['end'] = idx + 300
+                dict_periods[period_number]['end'] = play_number + 300
 
         return dict_periods
 
@@ -135,20 +138,17 @@ class Extract:
 
 
     def getPlayData(self):
-        rows = [[i] + [t.renderContents() for t in row.findAll('td')] for i, row in self.numberedrows if len(row.findAll('td')) == 4]
+        rows = [[play_number] + [t.renderContents() for t in row.findAll('td')] for play_number, row in self.numberedrows if len(row.findAll('td')) == 4]
 
         newrows = []        
         for (index, time_left, away, score, home) in rows:
+
             # Split into away-home score
-            (away_score, home_score) = score.split('-')
+            away_score, home_score = score.split('-')
+
             newrows.append((index, time_left, away_score, home_score, away, home))
 
         return newrows
-
-
-    def examineRowLengths(self):
-        lengths = [len(row.findAll('td')) for row in self.rows]
-        return list(set([(a, lengths.count(a)) for a in lengths]))
 
 
     def dumpToFile(self, list_data):

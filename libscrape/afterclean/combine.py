@@ -15,69 +15,114 @@ class Combine:
 
     def appendCbsSportsShotsToEspnPlayByPlay(self):
         shots_cbssports = self._getCbsSportsShots()
+        shots = shots_cbssports[:]
         playbyplay_espn = self._getEspnPlayByPlay()
-        
+
         combined = self._appendShots(shots_cbssports, playbyplay_espn)
+        combined = self._translateCbsSportsShotFields(combined, shots)
+        combined = self._cleanEspnPlayByPlayFields(combined)
+
+        self._writeToDatabase('playshot_cbssports', combined)
         self._writeToFile(LOGDIR_AFTERCLEAN + self.filename + '_cbssports', combined)
         
 
     def appendEspnShotsToEspnPlayByPlay(self):
         shots_espn = self._getEspnShots()
+        shots = shots_espn[:]
         playbyplay_espn = self._getEspnPlayByPlay()
 
         combined = self._appendShots(shots_espn, playbyplay_espn)
+        combined = self._translateEspnShotFields(combined, shots)
+        combined = self._cleanEspnPlayByPlayFields(combined)
+
+        self._writeToDatabase('playshot_espn', combined)
         self._writeToFile(LOGDIR_AFTERCLEAN + self.filename + '_espn', combined)
         
 
     def appendNbaComShotsToEspnPlayByPlay(self):
         shots_nbacom = self._getNbaComShots()
+        shots = shots_nbacom[:]
         playbyplay_espn = self._getEspnPlayByPlay()
 
         combined = self._appendShots(shots_nbacom, playbyplay_espn)
+        combined = self._translateNbaComShotFields(combined, shots)
+        combined = self._cleanEspnPlayByPlayFields(combined)
+
+        self._writeToDatabase('playshot_nbacom', combined)
         self._writeToFile(LOGDIR_AFTERCLEAN + self.filename + '_nbacom', combined)
+
+
+    def createCombinedPlayShot(self):
+        db.nba_query("""
+            INSERT INTO playshot
+            SELECT * 
+            FROM
+                playshot_espn
+            WHERE
+                game_id = %s
+        """ % (self.game_id))
+        db.nba_query("""
+            UPDATE playshot ps
+                INNER JOIN playshot_nbacom psnbacom 
+                    ON psnbacom.game_id = ps.game_id AND psnbacom.playbyplay_espn_id = ps.playbyplay_espn_id
+            SET
+                ps.shotchart_nbacom_id = psnbacom.shotchart_nbacom_id,
+                ps.shot_type_nbacom_id = psnbacom.shot_type_nbacom_id,
+                ps.shotchart_nbacom_x = psnbacom.shotchart_nbacom_x,
+                ps.shotchart_nbacom_y = psnbacom.shotchart_nbacom_y
+            WHERE ps.game_id = %s
+        """ % (self.game_id))
+        db.nba_query("""
+            UPDATE playshot ps
+                INNER JOIN playshot_cbssports pscbs
+                    ON pscbs.game_id = ps.game_id AND pscbs.playbyplay_espn_id = ps.playbyplay_espn_id
+            SET
+                ps.shotchart_cbssports_id = pscbs.shotchart_cbssports_id,
+                ps.shot_type_cbssports_id = pscbs.shot_type_cbssports_id,
+                ps.shotchart_cbssports_x = pscbs.shotchart_cbssports_x,
+                ps.shotchart_cbssports_y = pscbs.shotchart_cbssports_y
+            WHERE ps.game_id = %s
+        """ % (self.game_id))
 
 
     def _appendShots(self, shots, playbyplay):
     
         suggested_matches = []
         combined = []
-        for play_info in playbyplay:
+        combineresult = []
+        for play in playbyplay:
 
+            newplay = dict(play.items())
+            matchingresults = play
             # Get list of shots that may qualify
-            if play_info['is_shot'] == 1:
+            if play['is_shot'] == 1:
 
-                possible_matched_shots = self._findShotMatches(play_info, shots) 
+                possible_matched_shots = self._findShotMatches(play, shots) 
+                matchingresults['shot_matches'] = possible_matched_shots
 
                 foundShot = len(possible_matched_shots) >= 1
-                play_info['shot_matches'] = []
+                play['shot_matches'] = []
                 if foundShot:
-                    # Log which shots got matched to which plays
-                    play_info['shot_matches'] = possible_matched_shots                    
-                    suggested_matches.append(play_info)
 
-                    match = self._chooseBestMatch(possible_matched_shots, shots, play_info)
+                    match = self._chooseBestMatch(possible_matched_shots, shots, play)
                     shots = match['shots']
-                    play_info['best_shot_match'] = match['matched_shot'] 
+                    #matchingresults['best_shot_match'] = match['matched_shot'] 
 
-                    """
-                    play_info['x'] = match['matched_shot']['shot_data']['x']
-                    play_info['y'] = match['matched_shot']['shot_data']['y']
-                    #play_info['distance_shotchart'] = match['matched_shot']['shot_data']['distance']
-                    #play_info['cbs_shot_type_id'] = match['matched_shot']['shot_data']['shot_type_id']
-                    #play_info['shot_num_shotchart'] = match['matched_shot']['shot_data']['shot_num']
-                    play_info['sec_elapsed_game_shotchart'] = match['matched_shot']['shot_data']['deciseconds_left']
-                    """
+                    newplay['x'] = match['matched_shot']['shot_data']['x']
+                    newplay['y'] = match['matched_shot']['shot_data']['y']
+                    newplay['shot_id'] = match['matched_shot']['shot_data']['id']
+                    newplay['distance_playbyplay_espn'] = newplay['distance']
+                    del newplay['distance']
+                    del newplay['is_freethrow']
 
-            del play_info['is_freethrow']
-            #del play_info['is_shot_made']
-            #del play_info['is_shot']
-            del play_info['play_name']
-            del play_info['id'] # already in data structure as 'playbyplay_id' within SQL query
+            newplay['playbyplay_espn_id'] = play['id']
+            del newplay['play_name']
+            del newplay['home_play_desc']
+            del newplay['away_play_desc']
 
-            combined.append(play_info)
-       
-        # Temporary -- log the suggested play-shot matches
-        self._dumpSuggestedMatches(suggested_matches)
+            combined.append(newplay)
+            combineresult.append(play)
+ 
      
         return combined
 
@@ -109,12 +154,93 @@ class Combine:
 
         return {'matched_shot': matched_shot, 'shots': shots}
 
-    def matchEspnPlayByPlayToNbaComShotChart(self):
-        pass
-
     
-    def matchEspnPlayByPlayToEspnShotChart(self):
-        pass
+    def _translateCbsSportsShotFields(self, playshots, shots):
+        new_playshots = []
+        for line in playshots:
+            if 'shot_id' in line.keys():
+                line['shotchart_cbssports_id'] = line['shot_id']
+                line['shotchart_cbssports_x'] = line['x']
+                line['shotchart_cbssports_y'] = line['y']
+
+                for shot in shots:
+                    if int(shot['id']) == int(line['shot_id']):
+                        line['shot_type_cbssports_id'] = shot['shot_type_cbssports_id']
+                        line['is_shot_made'] = shot['is_shot_made']
+
+                del line['shot_id']
+                del line['x']
+                del line['y']
+
+            new_playshots.append(line)
+    
+        return new_playshots
+
+
+    def _translateNbaComShotFields(self, playshots, shots):
+        new_playshots = []
+        for line in playshots:
+            if 'shot_id' in line.keys():
+                line['shotchart_nbacom_id'] = line['shot_id']
+                line['shotchart_nbacom_x'] = line['x']
+                line['shotchart_nbacom_y'] = line['y']
+
+                
+                for shot in shots:
+                    if int(shot['id']) == int(line['shot_id']):
+                        line['shot_type_nbacom_id'] = shot['shot_type_nbacom_id']
+                        line['is_shot_made'] = shot['is_shot_made']
+
+                del line['shot_id']
+                del line['x']
+                del line['y']
+
+            new_playshots.append(line)
+    
+        return new_playshots
+
+
+    def _translateEspnShotFields(self, playshots, shots):
+        new_playshots = []
+        for line in playshots:
+            if 'shot_id' in line.keys():
+                line['shotchart_espn_id'] = line['shot_id']
+                line['shotchart_espn_x'] = line['x']
+                line['shotchart_espn_y'] = line['y']
+
+                for shot in shots:
+                    if int(shot['id']) == int(line['shot_id']):
+                        line['is_shot_made'] = shot['is_shot_made']
+
+                del line['shot_id']
+                del line['x']
+                del line['y']
+
+            new_playshots.append(line)
+    
+        return new_playshots
+        
+
+    def _cleanEspnPlayByPlayFields(self, playshots):
+        new_playshots = []
+        for line in playshots:
+            if 'distance' in line.keys():
+                line['distance_playbyplay_espn'] = line['distance']
+
+                del line['distance']
+
+            del line['id']
+            if 'is_freethrow' in line.keys():
+                del line['is_freethrow']
+            if 'is_shot' in line.keys():
+                del line['is_shot']
+            if 'is_shot_made' in line.keys():
+                del line['is_shot_made']
+
+            new_playshots.append(line)
+    
+        return new_playshots
+        
 
 
     def _dumpSuggestedMatches(self, data):
@@ -122,9 +248,6 @@ class Combine:
         shot_json = json.dumps(data, indent=2, sort_keys=True)
         f.write(shot_json)
 
-
-    def _getPotentialShotMatches(self):
-        pass
 
     def _findShotMatches(self, play_data, shot_data):
 
@@ -134,7 +257,7 @@ class Combine:
             isSamePlayer = play_data['player_id'] == shot_data['player_id'] 
             isSameShotResult = play_data['is_shot_made'] == shot_data['is_shot_made']
 
-            time_diff = (play_data['sec_elapsed_game'] - shot_data['deciseconds_left'])
+            time_diff = (play_data['deciseconds_left'] - shot_data['deciseconds_left'])
             isWithinTimeFrame = time_diff <= 300 and time_diff >= -100 and play_data['period'] == shot_data['period']
 
             if isSameTeam and isSamePlayer and isWithinTimeFrame and isSameShotResult:
@@ -146,14 +269,15 @@ class Combine:
     def _getCbsSportsShots(self):
         return list(db.nba_query_dict("""
             SELECT sh.*, s.name as shot_name, s.is_freethrow 
-            FROM nba_staging.shotchart_cbssports sh INNER JOIN shot_cbs s ON s.id = sh.shot_type_id WHERE sh.game_id = %s
+            FROM shotchart_cbssports sh 
+                INNER JOIN shot_type_cbssports s ON s.id = sh.shot_type_cbssports_id WHERE sh.game_id = %s
         """ % self.game_id))
 
 
     def _getNbaComShots(self):
         return list(db.nba_query_dict("""
             SELECT s.*
-            FROM nba_staging.shotchart_nbacom s
+            FROM shotchart_nbacom s
             WHERE s.game_id = %s
         """ % self.game_id))
 
@@ -161,17 +285,17 @@ class Combine:
     def _getEspnShots(self):
         return list(db.nba_query_dict("""
             SELECT s.*
-            FROM nba_staging.shotchart_espn s
+            FROM shotchart_espn s
             WHERE s.game_id = %s
         """ % self.game_id))
 
 
     def _getEspnPlayByPlay(self):
         return list(db.nba_query_dict("""
-            SELECT pbp.id as 'playbyplay_id', pbp.*, 
+            SELECT pbp.id as 'playbyplay_espn_id', pbp.*, 
                 p.is_shot, p.name 'play_name', p.is_freethrow, p.is_shot_made
-            FROM nba_staging.playbyplay_espn pbp 
-                INNER JOIN play_espn p ON pbp.play_id = p.id 
+            FROM playbyplay_espn pbp 
+                INNER JOIN play_espn p ON pbp.play_espn_id = p.id 
             WHERE pbp.game_id = %s
         """ % self.game_id))
 
@@ -180,6 +304,21 @@ class Combine:
         f = open(filename,'w')
         shot_json = json.dumps(data, indent=2, sort_keys=True)
         f.write(shot_json)
+
+        
+    def _writeToDatabase(self, table_name, data):
+        for line in data:
+            headers = [key for key,val in sorted(line.items())]
+            quoted_values = ['"%s"' % (val) for key,val in sorted(line.items())]
+            duplicate_key_clauses = ['%s="%s"' % (key,val) for key,val in sorted(line.items())]
+    
+            db.nba_query("""
+                INSERT INTO %s
+                (%s)
+                VALUES (%s)
+                ON DUPLICATE KEY UPDATE
+                %s
+            """ % (table_name, ','.join(headers), ','.join(quoted_values),','.join(duplicate_key_clauses)))
 
         
     def insert(self, data):
@@ -201,12 +340,12 @@ def main(game_id = 1499):
 
 
 def catchup():
-    last = datetime.date(2012,1,24)
-    first = datetime.date(2011,12,25)
+    last = datetime.date(2012,2,11)
+    first = datetime.date(2010,10,25)
     
     while first < last:
         
-        games = db.nba_query_dict("SELECT * FROM game WHERE date_played = '%s'" % (first)) 
+        games = db.nba_query_dict("SELECT * FROM game WHERE date_played = '%s'" % (first))
         for gamedata in games:
             print gamedata['abbrev']
             obj = Combine(gamedata)
@@ -214,6 +353,7 @@ def catchup():
             obj.appendCbsSportsShotsToEspnPlayByPlay()
             obj.appendEspnShotsToEspnPlayByPlay()
             obj.appendNbaComShotsToEspnPlayByPlay()
+            obj.createCombinedPlayShot()
 
         first = first + datetime.timedelta(days=1)
 
