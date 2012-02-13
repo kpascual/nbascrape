@@ -9,14 +9,13 @@ import json
 from libscrape.config import db
 from libscrape.config import constants 
 
-from shotchart import ShotChart
 
 
 LOGDIR_CLEAN = constants.LOGDIR_CLEAN
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
 
-class Clean(ShotChart):
+class Clean:
 
     def __init__(self, filename, gamedata, dbobj):
         self.xml = open(LOGDIR_EXTRACT + filename,'r').read()
