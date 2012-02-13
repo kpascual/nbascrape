@@ -28,8 +28,7 @@ class Clean:
 
         self.known_plays = self._getKnownPlays()
         #self.plays = [line.replace('\n','').split(',') for line in open(LOGDIR_EXTRACT + filename,'r').readlines()]
-        self.plays = [line for line in csv.reader(open(LOGDIR_EXTRACT + filename,'r'),delimiter=',',lineterminator='\n')]
-        self.fields = ['game_id', 'assist_player_id', 'away_score', 'distance', 'foul_info', 'foul_type', 'home_score', 'period', 'play_id', 'play_num', 'player1_id', 'player2_id', 'player_id', 'sec_elapsed_game', 'shot_type', 'team_id','home_play_desc','away_play_desc','play_desc']
+        self.plays = self._getPlays()
 
 
     def cleanAll(self):
@@ -37,28 +36,37 @@ class Clean:
             self.guessUnknownQuarters,
             self.replaceBlankScores,
             self.replaceWithConformedTime,
-            self.identifyPlays
+            self.addGameId,
+            self.identifyPlays,
+            self.fillInEmptyFields
         ]
 
         all_plays = self.plays
         for function_name in cleaning_functions:
             all_plays = function_name(all_plays)
-      
+
         self.dumpIntoFile(all_plays) 
-        #self.tempDbInsert(cleaned4) 
 
 
-    def tempDbInsert(self, data):
+    def _getPlays(self):
+        filename = LOGDIR_EXTRACT + self.filename
+        data = [line for line in csv.reader(open(filename,'r'),delimiter=',',lineterminator='\n')]
+
+        headers = ['period','play_num','time_left','away_score','home_score','away_play','home_play']
+    
+        newdata = []
         for line in data:
-            sql = "INSERT INTO pbptest (%s) VALUES (%s)" % (','.join(line.keys()),"'%s'" % "','".join(map(str,line.values())))
-            self.db.query(sql)
+            newline = dict(zip(headers,line))
+            newdata.append(newline)
+
+        return newdata
 
 
     def guessUnknownQuarters(self, plays):
         newdata = []
         for i, line in enumerate(plays):
-            if line[0] == 'check quarter':
-                line[0] = self.plays[i-1][0]
+            if line['period'] == 'check quarter':
+                line['period'] = plays[i-1]['period']
             
             newdata.append(line)
 
@@ -72,12 +80,16 @@ class Clean:
     def replaceWithConformedTime(self, plays):
         #conformed_times = self._getConformedTimes()
         cleaned = []
-        for (period, idx, time_left, away_score, home_score, away_play, home_play) in plays:
-            #found = [(itm['period'], itm['sec_elapsed_game']) for itm in conformed_times if itm['period_name'] == period and itm['time_left'] == time_left][0]
+        for line in plays:
+        #for (period, idx, time_left, away_score, home_score, away_play, home_play) in plays:
+            #found = [(itm['period'], itm['deciseconds_left']) for itm in conformed_times if itm['period_name'] == period and itm['time_left'] == time_left][0]
             #period = found[0]
             #time_left = found[1]
-            new_time_left = (int(time_left.split(':')[0]) * 60 + int(time_left.split(':')[1])) * 10
-            cleaned.append((period, idx, new_time_left, away_score, home_score, away_play, home_play)) 
+            line['deciseconds_left'] = (int(line['time_left'].split(':')[0]) * 60 + int(line['time_left'].split(':')[1])) * 10
+            del line['time_left']
+
+            cleaned.append(line)
+            #cleaned.append((period, idx, new_time_left, away_score, home_score, away_play, home_play)) 
     
         return cleaned
 
@@ -85,11 +97,20 @@ class Clean:
     def replaceBlankScores(self, data):
         new = []
         for i, line in enumerate(data):
-            if line[3] == '':
-                line[3] = data[i-1][3]
-            if line[4] == '':
-                line[4] = data[i-1][4]
+            if line['away_score'] == '':
+                line['away_score'] = data[i-1]['away_score']
+            if line['home_score'] == '':
+                line['home_score'] = data[i-1]['home_score']
            
+            new.append(line) 
+
+        return new
+
+
+    def addGameId(self, data):
+        new = []
+        for i, line in enumerate(data):
+            line['game_id'] = self.game_id
             new.append(line) 
 
         return new
@@ -97,19 +118,37 @@ class Clean:
 
     def identifyPlays(self, plays):
         cleaned = []
-        for (period, idx, time_left, away_score, home_score, away_play, home_play) in plays:
-            team, play, othervars = self._findPlay(away_play, home_play)
- 
-            newline = dict([(f,'') for f in self.fields]) 
-            newline.update([('period',period),('play_num',idx),('sec_elapsed_game',time_left),
-                ('game_id',self.game_id),('away_score',away_score),('home_score',home_score),('play_id',play),
-                ('team_id',team),('home_play_desc',home_play),('away_play_desc',away_play)])
-            newline.update(othervars)
+        for line in plays:
+        #for (period, idx, time_left, away_score, home_score, away_play, home_play) in plays:
+            team_id, play_espn_id, othervars = self._findPlay(line['away_play'], line['home_play'])
 
-            newline['play_desc'] = self._resolvePlayDescription(away_play, home_play)
-            cleaned.append(newline)
+            line['play_espn_id'] = play_espn_id
+            line['team_id'] = team_id
+            line['play_desc'] = self._resolvePlayDescription(line['away_play'], line['home_play'])
+            line.update(othervars)
+
+            del line['away_play']
+            del line['home_play']
+
+            cleaned.append(line)
 
         return cleaned 
+
+    
+    def fillInEmptyFields(self, data):
+        newdata = []
+        for line in data:
+            if 'assist_player_id' not in line.keys():
+                line['assist_player_id'] = -1
+            if 'player1_id' not in line.keys():
+                line['player1_id'] = -1
+            if 'player2_id' not in line.keys():
+                line['player2_id'] = -1
+            
+
+            newdata.append(line)
+
+        return newdata
 
 
     def _resolvePlayDescription(self, away_play_desc, home_play_desc):
@@ -175,7 +214,7 @@ class Clean:
     def _getPlayerIdsInGame(self):
         players = self.db.query_dict("""
             SELECT p.*
-            FROM player_resolved_test p
+            FROM player p
                 INNER JOIN player_nbacom_by_game g ON g.nbacom_player_id = p.nbacom_player_id
             WHERE g.game_id = %s
         """ % (self.gamedata['id']))
@@ -189,8 +228,8 @@ class Clean:
 
 
     def dumpIntoFile(self, data):
-        writer = csv.writer(open(LOGDIR_CLEAN + self.filename,'wb'),delimiter=',',lineterminator='\n')
-        writer.writerows([sorted(self.fields)] + [[val[1] for val in sorted(line.items())] for line in data])
+        f = open(LOGDIR_CLEAN + self.filename,'wb')
+        f.write(json.dumps(data))
 
 
 if __name__ == '__main__':

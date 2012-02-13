@@ -79,7 +79,7 @@ def getExistingSourceDocs(games):
 
 
 def restartFromExtract(dt):
-    dbobj = db.Db(db.dbconn_nba_test)
+    dbobj = db.Db(db.dbconn_nba)
 
     games = chooseGames(dt)
     gamedata = getExistingSourceDocs(games)
@@ -90,7 +90,7 @@ def restartFromExtract(dt):
 
 
 def restartFromClean(dt):
-    dbobj = db.Db(db.dbconn_nba_test)
+    dbobj = db.Db(db.dbconn_nba)
 
     games = chooseGames(dt)
     gamedata = getExistingSourceDocs(games)
@@ -117,7 +117,7 @@ def extractOnly(dt):
 
 def getAll(dt):
 
-    dbobj = db.Db(db.dbconn_nba_test)
+    dbobj = db.Db(db.dbconn_nba)
 
     # Choose games
     games = chooseGames(dt)
@@ -128,12 +128,12 @@ def getAll(dt):
 
     extract.main.go(gamedata)
     clean.main.go(gamedata, dbobj)
-    load.main.go(gamedata)
+    load.main.go(gamedata, dbobj)
 
 
 def main():
 
-    dbobj = db.Db(db.dbconn_nba_test)
+    dbobj = db.Db(db.dbconn_nba)
 
     try:
         dt = sys.argv[1]

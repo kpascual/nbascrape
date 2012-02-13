@@ -16,30 +16,32 @@ class Load:
 
     def loadCbsSportsShotData(self, f):
        
-        str_fields = open(constants.LOGDIR_CLEAN + f, 'r').readline()
-        sql = """
-            LOAD DATA LOCAL INFILE '%s' REPLACE
-            INTO TABLE shotchart_cbssports
-            FIELDS TERMINATED BY ','
-            LINES TERMINATED BY '\n'
-            IGNORE 1 LINES
-            (%s)
-        """ % (constants.LOGDIR_CLEAN + f, tables['shotchart_cbssports'], str_fields)
-        self.db.query(sql)
+        data = json.loads(open(constants.LOGDIR_CLEAN + f, 'r').read())
+        for line in data:
+            headers = [key for key,val in sorted(line.items())]
+            vals = ['"%s"' % (val) for key,val in sorted(line.items())]
+
+            sql = """
+                INSERT INTO shotchart_cbssports
+                (%s) VALUES
+                (%s)
+            """ % (','.join(headers), ','.join(vals))
+            self.db.query(sql)
 
 
     def loadEspnPlayByPlayData(self, f):
 
-        str_fields = open(constants.LOGDIR_CLEAN + f, 'r').readline()
-        sql = """
-            LOAD DATA LOCAL INFILE '%s' REPLACE
-            INTO TABLE playbyplay_espn
-            FIELDS TERMINATED BY ','
-            LINES TERMINATED BY '\n'
-            IGNORE 1 LINES
-            (%s)
-        """ % (constants.LOGDIR_CLEAN + f, tables['playbyplay_espn'], str_fields)
-        self.db.query(sql)
+        data = json.loads(open(constants.LOGDIR_CLEAN + f, 'r').read())
+        for line in data:
+            headers = [key for key,val in sorted(line.items())]
+            vals = ['"%s"' % (val) for key,val in sorted(line.items())]
+
+            sql = """
+                INSERT INTO playbyplay_espn
+                (%s) VALUES
+                (%s)
+            """ % (','.join(headers), ','.join(vals))
+            self.db.query(sql)
 
 
     def loadCbsSportsBoxScore(self, f):
@@ -52,7 +54,7 @@ class Load:
             LINES TERMINATED BY '\n'
             IGNORE 1 LINES
             (%s)
-        """ % (constants.LOGDIR_CLEAN + f, tables['boxscore_cbssports'], str_fields)
+        """ % (constants.LOGDIR_CLEAN + f, str_fields)
         self.db.query(sql)
 
 
@@ -61,7 +63,7 @@ class Load:
         for shot in shots:
             sql = """
                 INSERT INTO shotchart_nbacom
-                (game_id, player_id, x, y, nbacom_play_type_id, nbacom_play_num, period, deciseconds_left, team_id,  is_shot_made) VALUES
+                (game_id, player_id, x, y, shot_type_nbacom_id, nbacom_play_num, period, deciseconds_left, team_id,  is_shot_made) VALUES
                 (%s, %s, "%s", "%s", %s, %s, %s, %s, %s, %s)
             """ % (
                 shot['game_id'], shot['player_id'], shot['x'], shot['y'], shot['act'], shot['id'],
@@ -74,7 +76,6 @@ class Load:
     def loadBoxScoreNbaCom(self, f):
         data = json.loads(open(LOGDIR_CLEAN + f,'r').readline())
         for line in data:
-            print line 
             sql = """
                 INSERT INTO boxscore_nbacom
                 (game_id, player_id, is_dnp, time_played, sec_played, fgm, fga, threeptm, threepta, ftm, fta,
@@ -112,6 +113,7 @@ class Load:
 
 
 def go(tuple_games_and_files, dbobj):
+    print "Loading game files..."
     for gamedata, filenames in tuple_games_and_files:
         obj = Load(dbobj)
         obj.loadCbsSportsShotData(filenames['shotchart_cbssports'])

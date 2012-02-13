@@ -5,6 +5,7 @@ import os
 import pbp_espn
 import shotchart_cbssports
 import main
+from libscrape.config import db
 
 LOGDIR_SOURCE = '../../logs/source/'
 LOGDIR_EXTRACT = '../../logs/extract/'
@@ -12,26 +13,16 @@ LOGDIR_CLEAN = '../../logs/clean/'
 
 
 def mainfunc():
-    files_exist = [f for f in os.listdir(LOGDIR_CLEAN)]
-    files_playbyplay = [f for f in os.listdir(LOGDIR_EXTRACT) if 'pbp_espn' in f and f not in files_exist]
-    files_shotchart = list(set([f.replace('_players','').replace('_shots','') for f in os.listdir(LOGDIR_EXTRACT) if 'shotchart_cbssports' in f and f not in files_exist]))
 
-    """
-    print "%s New Play By Play files found" % len(files_playbyplay)
-    for f in files_playbyplay:
-        # Scrape ESPN play by play data
-        print f
-        list_plays = pbp_espn.Extract(open(LOGDIR_SOURCE + f,'r').read(), f).extractAll()
-        main.writeToFile(f,list_plays) 
-    """
 
-    print "%s New Shot Chart files found" % len(files_shotchart)
-    for f in files_shotchart:
-        # Scrape CBS Sports Shot Chart data
-        print f
-        obj_shot = shotchart_cbssports.CleanShots(f)
-        obj_shot.clean()
+    f = '2010-10-27_MIL@NO_playbyplay_espn'
+    print f
+    dbobj = db.Db(db.dbconn_nba)
 
+    gamedata = db.nba_query_dict("SELECT * FROM game where id = 6")[0]
+    obj = pbp_espn.Clean(f,gamedata,dbobj)
+    #returned = obj_shot.cleanAll()
+    data = obj.cleanAll()
 
 
 if __name__ == '__main__':

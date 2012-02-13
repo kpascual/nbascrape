@@ -171,7 +171,7 @@ class Clean(ShotChart):
     def _getPlayerIds(self):
         players = self.db.query_dict("""
             SELECT p.*
-            FROM player_resolved_test p
+            FROM player p
                 INNER JOIN player_nbacom_by_game g ON g.nbacom_player_id = p.nbacom_player_id
             WHERE g.game_id = %s
         """ % (self.gamedata['id']))

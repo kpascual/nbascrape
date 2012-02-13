@@ -86,7 +86,7 @@ class PlayerNbaCom:
 
                     # Add to resolved player table
                     result = self.db.query("""
-                        INSERT INTO player_resolved_test
+                        INSERT INTO player
                             (nbacom_player_id, last_name, first_name, date_found) 
                         VALUES ("%s","%s","%s","%s")
                     """ % (nbacom_player_id, last_name, first_name, self.date_played))
@@ -105,7 +105,7 @@ class PlayerNbaCom:
         player_id = self.db.query("""
             SELECT p.id
             FROM 
-                player_resolved_test p 
+                player p 
             WHERE 
                 p.nbacom_player_id = "%s"
         """ % (nbacom_player_id))[0][0]
@@ -145,7 +145,7 @@ class PlayerNbaCom:
                 (player_id, team_id, start_date)
                 SELECT id, %s, "%s"
                 FROM
-                    player_resolved_test p
+                    player p
                 WHERE
                     p.id = "%s"
             """ % (team_id, self.date_played, player_id))
@@ -199,7 +199,7 @@ class PlayerCbsSports:
 
     def matchWithResolvedPlayer(self, cbssports_player_id, full_name, cbs_team_code, game_id):
         existing_player = self.db.query("""
-            SELECT * FROM player_resolved_test
+            SELECT * FROM player
             WHERE cbssports_player_id = %s
         """ % (cbssports_player_id))
 
@@ -224,7 +224,7 @@ class PlayerCbsSports:
                 matched_nbacom_player_id = result[names.index(best_match)][0]
                 
                 self.db.query("""
-                    UPDATE player_resolved_test
+                    UPDATE player
                     SET cbssports_player_id = "%s"
                     WHERE nbacom_player_id = "%s"
                         AND cbssports_player_id IS NULL

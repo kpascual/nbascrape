@@ -18,13 +18,15 @@ def fillFiveman():
 
 def main():
 
-    last = datetime.date(2012,1,24)
+    last = datetime.date(2012,2,11)
 
-    first = datetime.date(2012,1,18)
+    first = datetime.date(2012,2,4)
 
     while first < last:
-        master.restartFromExtract(first)
+        #master.restartFromExtract(first)
+        master.getAll(first)
         first = first + datetime.timedelta(days=1)
+
 
 if __name__ == '__main__':
     main()
