@@ -28,17 +28,66 @@ class CleanBoxScore:
         player_stats = self.getStats()
         player_stats = self._addGameId(player_stats)
 
-        self._dumpFile(player_stats)
+        self._dumpFile(player_stats, self.filename)
 
+        self.getGameInfo()
+
+
+    def getGameInfo(self):
+        data = {}
+        data.update(self.getOfficials())
+        data.update(self.getOtherGameData())
+        data['game_id'] = self.gamedata['id']
+
+        self._dumpFile(data, self.filename + '_game_stats')
+        
 
     def getOfficials(self):
         soupofficials = self.soup.find("officials")
         
         officials = dict(soupofficials.attrs)['nm'].split('^')
 
-        for official in officials:
-            print official
-        
+        return dict(zip(['official1','official2','official3'],officials))
+       
+
+    def getOtherGameData(self):
+        # Get game-level data
+        gamedata = self.soup.find("game")
+        dict_gamedata = dict(gamedata.attrs)
+        data = {}
+
+        data['arena'] = dict_gamedata['arn']
+        data['attendance'] = data['arena'].split('|')[3]
+        data['duration'] = dict_gamedata['dur']
+        data['local_game_start'] = dict_gamedata['timloc']
+        data['home_game_start'] = dict_gamedata['timh']
+        data['away_game_start'] = dict_gamedata['timv']
+        data['unknown_game_start'] = dict_gamedata['timet']
+        data['national'] = dict_gamedata['nbrd']
+
+        home_data = self.soup.find("htm")
+        dict_home = dict(home_data.attrs)
+
+        data['home_tv'] = dict_home['brd'].split('|')[0]
+        data['home_radio'] = dict_home['brd'].split('|')[1]
+        data['home_quarter_score'] = dict_home['scr']
+        data['home_score'] = data['home_quarter_score'].split('|')[8]
+        data['home_record'] = dict_home['rcd'].replace('/','-')
+        data['home_record_conference'] = dict_home['std'].split('|')[0]
+        data['home_record_division'] = dict_home['std'].split('|')[1]
+
+        away_data = self.soup.find("vtm")
+        dict_away = dict(away_data.attrs)
+
+        data['away_tv'] = dict_away['brd'].split('|')[0]
+        data['away_radio'] = dict_away['brd'].split('|')[1]
+        data['away_quarter_score'] = dict_away['scr']
+        data['away_score'] = data['away_quarter_score'].split('|')[8]
+        data['away_record'] = dict_away['rcd'].replace('/','-')
+        data['away_record_conference'] = dict_away['std'].split('|')[0]
+        data['away_record_division'] = dict_away['std'].split('|')[1]
+
+        return data
 
 
     def getPlayerLines(self):
@@ -169,8 +218,8 @@ class CleanBoxScore:
         return player_data_adjusted
 
 
-    def _dumpFile(self, data):
-        f = open(LOGDIR_CLEAN + self.filename,'w')
+    def _dumpFile(self, data, filename):
+        f = open(LOGDIR_CLEAN + filename,'w')
         data_json = json.dumps(data)
         f.write(data_json)
 
@@ -188,7 +237,11 @@ def main():
         filename = game['abbrev'] + '_boxscore_nbacom'
 
         obj = CleanBoxScore(filename, game, dbobj)
-        obj.getOfficials()
+        result = obj.getGameInfo()
+        
+
+    
+       
     
 
 if __name__ == '__main__':
