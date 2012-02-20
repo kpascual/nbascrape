@@ -1,5 +1,5 @@
 import json
-
+import os
 from libscrape.config import db
 from libscrape.config import constants
 
@@ -112,6 +112,21 @@ class Load:
             self.db.query(sql)
 
 
+    def loadBoxScoreNbaComGameStats(self, f):
+        stats = json.loads(open(LOGDIR_CLEAN + f,'r').readline())
+
+        headers = [key for key,val in sorted(stats.items())]
+        vals = ['"%s"' % (val) for key,val in sorted(stats.items())]
+
+        sql = """
+            INSERT INTO game_stats
+            (%s) VALUES
+            (%s)
+        """ % (','.join(headers), ','.join(vals))
+        self.db.query(sql)
+
+
+
 def go(tuple_games_and_files, dbobj):
     print "Loading game files..."
     for gamedata, filenames in tuple_games_and_files:
@@ -122,11 +137,18 @@ def go(tuple_games_and_files, dbobj):
         obj.loadShotChartNbaCom(filenames['shotchart_nbacom'])
         obj.loadShotChartEspn(filenames['shotchart_espn'])
         obj.loadBoxScoreNbaCom(filenames['boxscore_nbacom'])
+        obj.loadBoxScoreNbaComGameStats(filenames['boxscore_nbacom'] + '_game_stats')
         
 
 def test():
-    f = '2011-12-25_LAC@GS_shotchart_espn'
-    loadShotChartEspn(f)
+    dbobj = db.Db(db.dbconn_nba)
+
+    files = [f for f in os.listdir(LOGDIR_CLEAN) if 'game_stats' in f]
+    
+    obj = Load(dbobj)
+
+    for f in files:
+        obj.loadBoxScoreNbaComGameStats(f)
 
 
 if __name__ == '__main__':

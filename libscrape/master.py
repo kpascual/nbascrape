@@ -9,6 +9,7 @@ import source.main
 import extract.main
 import clean.main
 import load.main
+import afterclean.main
 import findgames
 
 
@@ -130,6 +131,8 @@ def getAll(dt):
     clean.main.go(gamedata, dbobj)
     load.main.go(gamedata, dbobj)
 
+    afterclean.main.go(gamedata, dbobj)
+
 
 def main():
 
@@ -142,19 +145,7 @@ def main():
         dt = datetime.date.today() - datetime.timedelta(days=1)
 
     print dt
-    
-    # Identify games
-    #findgames.main(dt) 
-    # Choose games
-    games = chooseGames(dt)
-
-    # MAIN ETL PROCESS
-    # Get source
-    gamedata_and_filenames = source.main.go(games)
-
-    extract.main.go(gamedata_and_filenames)
-    clean.main.go(gamedata_and_filenames, dbobj)
-    load.main.go(gamedata_and_filenames, dbobj)
+    getAll(dt)
     
 
 if __name__ == '__main__':
