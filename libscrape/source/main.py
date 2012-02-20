@@ -2,6 +2,7 @@ import MySQLdb
 import sys
 import datetime
 import urllib2
+import os
 
 from libscrape.config import db
 from libscrape.config import constants
@@ -32,40 +33,61 @@ def getAndSaveFiles(game):
     
     # CBS Sports Shot Chart and box score
     filename_shotchart_cbssports = '%s_shotchart_cbssports' % game['abbrev']
-    str_body = getSourceDoc(constants.URL_SHOTCHART_CBSSPORTS + game['cbssports_game_id']) 
-    saveToFile(filename_shotchart_cbssports, str_body)
-    print '--- CBS Sports file for %s saved ' % game['abbrev']
     filename_boxscore_cbssports = '%s_boxscore_cbssports' % game['abbrev']
+    if not doesFileExist(filename_shotchart_cbssports):
+        str_body = getSourceDoc(constants.URL_SHOTCHART_CBSSPORTS + game['cbssports_game_id']) 
+        saveToFile(filename_shotchart_cbssports, str_body)
+        print '--- CBS Sports shot chart file for %s saved ' % game['abbrev']
+    else:
+        print '--- CBS Sports shot chart file already found for %s. Skipping. ' % game['abbrev']
 
     # ESPN Play by Play
     filename_playbyplay_espn = '%s_playbyplay_espn' % game['abbrev']
-    str_body = getSourceDoc(constants.URL_PLAYBYPLAY_ESPN.replace('<game_id>',str(game['espn_game_id']))) 
-    saveToFile(filename_playbyplay_espn, str_body)
-    print '--- ESPN file for %s saved ' % game['abbrev']
+    if not doesFileExist(filename_playbyplay_espn):
+        str_body = getSourceDoc(constants.URL_PLAYBYPLAY_ESPN.replace('<game_id>',str(game['espn_game_id']))) 
+        saveToFile(filename_playbyplay_espn, str_body)
+        print '--- ESPN Play by Play file for %s saved ' % game['abbrev']
+    else:
+        print '--- ESPN Play by Play file already found for %s. Skipping. ' % game['abbrev']
+
 
     # ESPN Shot Chart
     filename_shotchart_espn = '%s_shotchart_espn' % game['abbrev']
-    str_body = getSourceDoc(constants.URL_SHOTCHART_ESPN.replace('<game_id>',str(game['espn_game_id']))) 
-    saveToFile(filename_shotchart_espn, str_body)
-    print '--- ESPN Shot Chart file for %s saved ' % game['abbrev']
+    if not doesFileExist(filename_shotchart_espn):
+        str_body = getSourceDoc(constants.URL_SHOTCHART_ESPN.replace('<game_id>',str(game['espn_game_id']))) 
+        saveToFile(filename_shotchart_espn, str_body)
+        print '--- ESPN Shot Chart file for %s saved ' % game['abbrev']
+    else:
+        print '--- ESPN Shot Chart file already found for %s. Skipping. ' % game['abbrev']
+        
 
     # NBA.com play by play
     filename_playbyplay_nbacom = '%s_playbyplay_nbacom' % game['abbrev']
-    str_body = getSourceDoc(constants.URL_PLAYBYPLAY_NBACOM.replace('<game_id>',str(game['nbacom_game_id']))) 
-    saveToFile(filename_playbyplay_nbacom, str_body)
-    print '--- NBA.com play by play file for %s saved ' % game['abbrev']
+    if not doesFileExist(filename_playbyplay_nbacom):
+        str_body = getSourceDoc(constants.URL_PLAYBYPLAY_NBACOM.replace('<game_id>',str(game['nbacom_game_id']))) 
+        saveToFile(filename_playbyplay_nbacom, str_body)
+        print '--- NBA.com play by play file for %s saved ' % game['abbrev']
+    else:
+        print '--- NBA.com play by play file already found for %s. Skipping. ' % game['abbrev']
+
 
     # NBA.com shot chart
     filename_shotchart_nbacom = '%s_shotchart_nbacom' % game['abbrev']
-    str_body = getSourceDoc(constants.URL_SHOTCHART_NBACOM.replace('<game_id>',str(game['nbacom_game_id']))) 
-    saveToFile(filename_shotchart_nbacom, str_body)
-    print '--- NBA.com shot chart file for %s saved ' % game['abbrev']
+    if not doesFileExist(filename_shotchart_nbacom):
+        str_body = getSourceDoc(constants.URL_SHOTCHART_NBACOM.replace('<game_id>',str(game['nbacom_game_id']))) 
+        saveToFile(filename_shotchart_nbacom, str_body)
+        print '--- NBA.com shot chart file for %s saved ' % game['abbrev']
+    else:
+        print '--- NBA.com shot chart file already found for %s. Skipping. ' % game['abbrev']
 
     # NBA.com box score
     filename_boxscore_nbacom = '%s_boxscore_nbacom' % game['abbrev']
-    str_body = getSourceDoc(constants.URL_BOXSCORE_NBACOM.replace('<game_id>',str(game['nbacom_game_id']))) 
-    saveToFile(filename_boxscore_nbacom, str_body)
-    print '--- NBA.com box score file for %s saved ' % game['abbrev']
+    if not doesFileExist(filename_boxscore_nbacom):
+        str_body = getSourceDoc(constants.URL_BOXSCORE_NBACOM.replace('<game_id>',str(game['nbacom_game_id']))) 
+        saveToFile(filename_boxscore_nbacom, str_body)
+        print '--- NBA.com box score file for %s saved ' % game['abbrev']
+    else:
+        print '--- NBA.com box score file already found for %s. Skipping. ' % game['abbrev']
 
     return {
         'shotchart_cbssports'   : filename_shotchart_cbssports,
@@ -76,6 +98,13 @@ def getAndSaveFiles(game):
         'boxscore_nbacom'       : filename_boxscore_nbacom,
         'boxscore_cbssports'    : filename_boxscore_cbssports
     }
+
+
+def doesFileExist(filename):
+    if filename in os.listdir(LOGDIR_SOURCE):
+        return True
+    else:
+        return False
 
 
 def go(games):

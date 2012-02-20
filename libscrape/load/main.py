@@ -114,7 +114,6 @@ class Load:
 
     def loadBoxScoreNbaComGameStats(self, f):
         stats = json.loads(open(LOGDIR_CLEAN + f,'r').readline())
-        print stats
 
         headers = [key for key,val in sorted(stats.items())]
         vals = ['"%s"' % (val) for key,val in sorted(stats.items())]
@@ -138,6 +137,7 @@ def go(tuple_games_and_files, dbobj):
         obj.loadShotChartNbaCom(filenames['shotchart_nbacom'])
         obj.loadShotChartEspn(filenames['shotchart_espn'])
         obj.loadBoxScoreNbaCom(filenames['boxscore_nbacom'])
+        obj.loadBoxScoreNbaComGameStats(filenames['boxscore_nbacom'] + '_game_stats')
         
 
 def test():

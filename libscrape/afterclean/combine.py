@@ -7,10 +7,18 @@ import libscrape.config.constants
 LOGDIR_AFTERCLEAN = libscrape.config.constants.LOGDIR_AFTERCLEAN
 
 class Combine:
-    def __init__(self, gamedata):
+    def __init__(self, gamedata, dbobj):
         self.gamedata = gamedata
         self.filename = self.gamedata['abbrev'] + '_combined'
         self.game_id = self.gamedata['id']
+        self.dbobj = dbobj
+
+
+    def combineAll(self):
+        self.appendCbsSportsShotsToEspnPlayByPlay()
+        self.appendEspnShotsToEspnPlayByPlay()
+        self.appendNbaComShotsToEspnPlayByPlay()
+        self.createCombinedPlayShot()
 
 
     def appendCbsSportsShotsToEspnPlayByPlay(self):
@@ -53,7 +61,7 @@ class Combine:
 
 
     def createCombinedPlayShot(self):
-        db.nba_query("""
+        self.dbobj.query("""
             INSERT INTO playshot
             SELECT * 
             FROM
@@ -61,7 +69,7 @@ class Combine:
             WHERE
                 game_id = %s
         """ % (self.game_id))
-        db.nba_query("""
+        self.dbobj.query("""
             UPDATE playshot ps
                 INNER JOIN playshot_nbacom psnbacom 
                     ON psnbacom.game_id = ps.game_id AND psnbacom.playbyplay_espn_id = ps.playbyplay_espn_id
@@ -72,7 +80,7 @@ class Combine:
                 ps.shotchart_nbacom_y = psnbacom.shotchart_nbacom_y
             WHERE ps.game_id = %s
         """ % (self.game_id))
-        db.nba_query("""
+        self.dbobj.query("""
             UPDATE playshot ps
                 INNER JOIN playshot_cbssports pscbs
                     ON pscbs.game_id = ps.game_id AND pscbs.playbyplay_espn_id = ps.playbyplay_espn_id
@@ -232,10 +240,6 @@ class Combine:
             del line['id']
             if 'is_freethrow' in line.keys():
                 del line['is_freethrow']
-            if 'is_shot' in line.keys():
-                del line['is_shot']
-            if 'is_shot_made' in line.keys():
-                del line['is_shot_made']
 
             new_playshots.append(line)
     
@@ -267,7 +271,7 @@ class Combine:
 
 
     def _getCbsSportsShots(self):
-        return list(db.nba_query_dict("""
+        return list(self.dbobj.query_dict("""
             SELECT sh.*, s.name as shot_name, s.is_freethrow 
             FROM shotchart_cbssports sh 
                 INNER JOIN shot_type_cbssports s ON s.id = sh.shot_type_cbssports_id WHERE sh.game_id = %s
@@ -275,7 +279,7 @@ class Combine:
 
 
     def _getNbaComShots(self):
-        return list(db.nba_query_dict("""
+        return list(self.dbobj.query_dict("""
             SELECT s.*
             FROM shotchart_nbacom s
             WHERE s.game_id = %s
@@ -283,7 +287,7 @@ class Combine:
 
 
     def _getEspnShots(self):
-        return list(db.nba_query_dict("""
+        return list(self.dbobj.query_dict("""
             SELECT s.*
             FROM shotchart_espn s
             WHERE s.game_id = %s
@@ -291,7 +295,7 @@ class Combine:
 
 
     def _getEspnPlayByPlay(self):
-        return list(db.nba_query_dict("""
+        return list(self.dbobj.query_dict("""
             SELECT pbp.id as 'playbyplay_espn_id', pbp.*, 
                 p.is_shot, p.name 'play_name', p.is_freethrow, p.is_shot_made
             FROM playbyplay_espn pbp 
@@ -312,7 +316,7 @@ class Combine:
             quoted_values = ['"%s"' % (val) for key,val in sorted(line.items())]
             duplicate_key_clauses = ['%s="%s"' % (key,val) for key,val in sorted(line.items())]
     
-            db.nba_query("""
+            self.dbobj.query("""
                 INSERT INTO %s
                 (%s)
                 VALUES (%s)
@@ -326,11 +330,11 @@ class Combine:
             fields = ','.join(map(str,sorted(itm.keys())))
             values = "\"" + "\",\"".join(map(str,[v for k,v in sorted(itm.items())])) + "\""
             sql = """INSERT INTO combined (%s) VALUES (%s) """  % (fields, values)
-            db.nba_query(sql)
+            self.dbobj.query(sql)
 
 
 def main(game_id = 1499):
-    gamedata = db.nba_query_dict("SELECT * FROM game WHERE id = %s" % (game_id))[0]
+    gamedata = self.dbobj.query_dict("SELECT * FROM game WHERE id = %s" % (game_id))[0]
     obj = Combine(gamedata)
 
     obj.appendCbsSportsShotsToEspnPlayByPlay()
@@ -340,12 +344,12 @@ def main(game_id = 1499):
 
 
 def catchup():
-    last = datetime.date(2012,2,11)
-    first = datetime.date(2010,10,25)
+    last = datetime.date(2012,2,19)
+    first = datetime.date(2012,2,18)
     
     while first < last:
         
-        games = db.nba_query_dict("SELECT * FROM game WHERE date_played = '%s'" % (first))
+        games = self.dbobj.query_dict("SELECT * FROM game WHERE date_played = '%s'" % (first))
         for gamedata in games:
             print gamedata['abbrev']
             obj = Combine(gamedata)
