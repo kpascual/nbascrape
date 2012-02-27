@@ -78,15 +78,15 @@ class Load:
         for line in data:
             sql = """
                 INSERT INTO boxscore_nbacom
-                (game_id, player_id, is_dnp, time_played, sec_played, fgm, fga, threeptm, threepta, ftm, fta,
+                (game_id, player_id, team_id, is_dnp, time_played, sec_played, fgm, fga, threeptm, threepta, ftm, fta,
                 off_reb, def_reb, total_reb, assists, personal_fouls, steals, turnovers, blocks, blocks_against, 
                 plusminus, total_points, unknown12)
                 VALUES
-                (%s, %s, %s, "%s", %s, %s, %s, %s, %s, %s, %s, 
+                (%s, %s, %s, %s, "%s", %s, %s, %s, %s, %s, %s, %s, 
                 %s, %s, %s, %s, %s, %s, %s, %s, %s,
                 "%s", %s, %s)
             """ % (
-                line['game_id'], line['player_id'], line['is_dnp'], line['time_played'], line['sec_played'], 
+                line['game_id'], line['player_id'], line['team_id'], line['is_dnp'], line['time_played'], line['sec_played'], 
                 line['fgm'], line['fga'], line['threeptm'], line['threepta'], line['ftm'], line['fta'],
                 line['off_reb'], line['def_reb'], line['total_reb'], line['assists'], line['pfouls'],
                 line['steals'], line['turnovers'], line['blocks'], line['blocks_against'], line['plusminus'],
