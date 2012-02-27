@@ -29,7 +29,6 @@ class CleanBoxScore:
         player_stats = self._addGameId(player_stats)
 
         self._dumpFile(player_stats, self.filename)
-
         self.getGameInfo()
 
 
@@ -132,6 +131,12 @@ class CleanBoxScore:
                 parsed_stats = self._parseStatLine(p['stat'])
                 player_stat_line.update(parsed_stats)
                 
+                # Add team id
+                if team_name == 'home':
+                    player_stat_line['team_id'] = self.gamedata['home_team_id']
+                else:
+                    player_stat_line['team_id'] = self.gamedata['away_team_id']
+                
                 # Check if the player was a DNP
                 if p['dnp'] == 'DNP':
                     player_stat_line['is_dnp'] = 1
@@ -209,7 +214,6 @@ class CleanBoxScore:
     def _addGameId(self, player_data):
         player_data_adjusted = []
        
-        
         for line in player_data:
             
             line['game_id'] = self.gamedata['id'] 
