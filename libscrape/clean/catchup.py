@@ -1,10 +1,7 @@
 import sys
 import datetime
 import os
-
-import pbp_espn
-import shotchart_cbssports
-import main
+import player
 from libscrape.config import db
 
 LOGDIR_SOURCE = '../../logs/source/'
@@ -13,16 +10,19 @@ LOGDIR_CLEAN = '../../logs/clean/'
 
 
 def mainfunc():
+    dbobj = db.Db(db.dbconn_nba_test)
 
+    gamedata = dbobj.query_dict("SELECT * FROM game WHERE date_played <= '2012-02-01' ORDER BY date_played ASC")
 
-    f = '2010-10-27_MIL@NO_playbyplay_espn'
-    print f
-    dbobj = db.Db(db.dbconn_nba)
-
-    gamedata = db.nba_query_dict("SELECT * FROM game where id = 6")[0]
-    obj = pbp_espn.Clean(f,gamedata,dbobj)
-    #returned = obj_shot.cleanAll()
-    data = obj.cleanAll()
+    for g in gamedata:
+        fnba = g['abbrev'] + '_boxscore_nbacom'
+        fcbs = g['abbrev'] + '_shotchart_cbssports'
+        if fnba in os.listdir(LOGDIR_EXTRACT):
+            print g['abbrev']
+            obj = player.PlayerNbaCom(LOGDIR_EXTRACT + fnba, g, dbobj)
+            obj.resolveNewPlayers()
+            obj = player.PlayerCbsSports(LOGDIR_EXTRACT + fcbs + '_players', g, dbobj)
+            obj.resolveNewPlayers()
 
 
 if __name__ == '__main__':
