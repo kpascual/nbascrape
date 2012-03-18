@@ -5,6 +5,8 @@ import datetime
 import libscrape.config.constants
 
 LOGDIR_AFTERCLEAN = libscrape.config.constants.LOGDIR_AFTERCLEAN
+LOGDIR_DOCS = libscrape.config.constants.LOGDIR_DOCS
+
 
 class Combine:
     def __init__(self, gamedata, dbobj):
@@ -19,6 +21,8 @@ class Combine:
         self.appendEspnShotsToEspnPlayByPlay()
         self.appendNbaComShotsToEspnPlayByPlay()
         self.createCombinedPlayShot()
+        self.saveCalculatedGameStats()
+        self.createGameFlow()
 
 
     def appendCbsSportsShotsToEspnPlayByPlay(self):
@@ -244,7 +248,55 @@ class Combine:
             new_playshots.append(line)
     
         return new_playshots
-        
+
+    def saveCalculatedGameStats(self):
+        plays = self._getPlayShot()
+
+        margin_high = 0
+        margin_low = 0
+        total_periods = 0
+
+        for play in plays:
+            margin = play['away_score'] - play['home_score']
+            if play['period'] > total_periods: total_periods = play['period']
+            if margin > margin_high: margin_high = margin
+            if margin < margin_low: margin_low = margin
+
+        self.dbobj.query("UPDATE game_stats SET total_periods = %s WHERE game_id = %s" % (total_periods, self.game_id))
+        self.dbobj.query("UPDATE game_stats SET margin_high = %s WHERE game_id = %s" % (margin_high, self.game_id))
+        self.dbobj.query("UPDATE game_stats SET margin_low = %s WHERE game_id = %s" % (margin_low, self.game_id))
+
+
+    def createGameFlow(self):
+        plays = self._getPlayShot()
+        flow = []
+        for play in plays:
+            total_deciseconds = 7200
+            prior_deciseconds_elapsed = (play['period'] - 1) * 7200
+
+            if play['period'] >= 5:
+                total_deciseconds = 3000
+                prior_deciseconds_elapsed = (7200 * 4) + (play['period'] - 4 - 1) * 3000
+
+            xval = prior_deciseconds_elapsed + (total_deciseconds - play['deciseconds_left'])
+            yval = play['away_score'] - play['home_score']
+            
+            flow.append((xval, yval))
+
+        flow = sorted(flow)
+        newflow = []
+        for xval, yval in flow:
+            newflow.append({'x': xval, 'y': yval})
+                    
+        json_flow = json.dumps(newflow)
+        #self.dbobj.query("UPDATE game_stats SET gameflow = '%s' WHERE game_id = %s" % (json_flow, self.game_id))
+        f = open(LOGDIR_DOCS + self.gamedata['abbrev'] + '_gameflow.json','w')
+        f.write(json_flow)
+        f.close()
+
+
+    def getTotalPeriods(self):
+        return 4
 
 
     def _dumpSuggestedMatches(self, data):
@@ -295,6 +347,16 @@ class Combine:
 
 
     def _getEspnPlayByPlay(self):
+        return list(self.dbobj.query_dict("""
+            SELECT pbp.id as 'playbyplay_espn_id', pbp.*, 
+                p.is_shot, p.name 'play_name', p.is_freethrow, p.is_shot_made
+            FROM playbyplay_espn pbp 
+                INNER JOIN play_espn p ON pbp.play_espn_id = p.id 
+            WHERE pbp.game_id = %s
+        """ % self.game_id))
+
+
+    def _getPlayShot(self):
         return list(self.dbobj.query_dict("""
             SELECT pbp.id as 'playbyplay_espn_id', pbp.*, 
                 p.is_shot, p.name 'play_name', p.is_freethrow, p.is_shot_made
