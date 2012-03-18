@@ -116,6 +116,13 @@ def extractOnly(dt):
     extract.main.go(gamedata)
 
 
+def aftercleanOnly(dt):
+    dbobj = db.Db(db.dbconn_nba)
+    games = chooseGames(dt)
+    gamedata = source.main.go(games)
+    afterclean.main.go(gamedata, dbobj)
+
+
 def getAll(dt):
 
     dbobj = db.Db(db.dbconn_nba)
