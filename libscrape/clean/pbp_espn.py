@@ -26,7 +26,6 @@ class Clean:
         self.date_played = self.gamedata['date_played']
         self.db = dbobj
 
-        self.known_plays = self._getKnownPlays()
         #self.plays = [line.replace('\n','').split(',') for line in open(LOGDIR_EXTRACT + filename,'r').readlines()]
         self.plays = self._getPlays()
 
@@ -165,7 +164,8 @@ class Clean:
 
 
     def _findPlay(self,away_play,home_play):
-        for (play_id, play_re, play_name) in self.known_plays:
+        known_plays = self._getKnownPlays()
+        for (play_id, play_re, play_name) in known_plays:
             
             # Identify away play
             match = re.search(play_re,away_play)

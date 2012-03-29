@@ -5,9 +5,11 @@ import clean.boxscore_nbacom
 import load.main
 from libscrape.config import db
 
+
 def checkClean():
     dt = datetime.date(2010,10,26)
     master.restartFromClean(dt)
+
 
 def fillFiveman():
 
@@ -33,9 +35,9 @@ def updateBoxScoreTeamIds():
 
 def main():
 
-    last = datetime.date(2012,2,11)
+    last = datetime.date(2012,1,31)
 
-    first = datetime.date(2012,2,4)
+    first = datetime.date(2012,1,12)
 
     while first < last:
         #master.restartFromExtract(first)
@@ -44,5 +46,5 @@ def main():
 
 
 if __name__ == '__main__':
-    updateBoxScoreTeamIds()
+    main()
 

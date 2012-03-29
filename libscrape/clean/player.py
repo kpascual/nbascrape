@@ -276,6 +276,13 @@ def populateOldPlayers():
         obj.resolveNewPlayers()    
 
 
+def updatePlayerFullName(dbobj):
+    dbobj.query("""
+        UPDATE player SET full_name = CONCAT(first_name,' ',last_name)
+        WHERE full_name IS NULL
+    """)
+
+
 def main():
 
     #files = [f for f in os.listdir(LOGDIR_EXTRACT) if '2011-12' in f and 'boxscore' in f]
