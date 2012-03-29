@@ -52,6 +52,8 @@ def go(tuple_games_and_files, dbobj):
         obj.resolveNewPlayers()
         obj = player.PlayerCbsSports(LOGDIR_EXTRACT + filenames['shotchart_cbssports'] + '_players', gamedata, dbobj)
         obj.resolveNewPlayers()
+        player.updatePlayerFullName(dbobj)
+
 
         print "+++ Cleaning CBSSports.com shot chart data in %s" % (filenames['shotchart_cbssports'])
         shotvars = {
