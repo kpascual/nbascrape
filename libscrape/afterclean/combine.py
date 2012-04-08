@@ -67,9 +67,9 @@ class Combine:
     def createCombinedPlayShot(self):
         self.dbobj.query("""
             INSERT INTO playshot
-            SELECT * 
+            SELECT ps.*, 0
             FROM
-                playshot_espn
+                playshot_espn ps
             WHERE
                 game_id = %s
         """ % (self.game_id))
