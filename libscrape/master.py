@@ -140,6 +140,9 @@ def getAll(dt):
 
     afterclean.main.go(gamedata, dbobj)
 
+    tomorrow = dt + datetime.timedelta(days=1)
+    findgames.go(tomorrow)
+
 
 def main():
 
