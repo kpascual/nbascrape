@@ -9,7 +9,7 @@ import source.main
 import extract.main
 import clean.main
 import load.main
-import afterclean.main
+import afterclean2.main
 import findgames
 
 
@@ -120,7 +120,7 @@ def aftercleanOnly(dt):
     dbobj = db.Db(db.dbconn_nba)
     games = chooseGames(dt)
     gamedata = source.main.go(games)
-    afterclean.main.go(gamedata, dbobj)
+    afterclean2.main.go(gamedata, dbobj)
 
 
 def getAll(dt):
@@ -138,7 +138,10 @@ def getAll(dt):
     clean.main.go(gamedata, dbobj)
     load.main.go(gamedata, dbobj)
 
-    afterclean.main.go(gamedata, dbobj)
+    afterclean2.main.go(gamedata, dbobj)
+
+    tomorrow = dt + datetime.timedelta(days=1)
+    findgames.go(tomorrow)
 
 
 def main():
