@@ -91,12 +91,44 @@ def _fillInGameData(game_data, dt):
 
 
 def _writeToDatabase(games, date_played):
+    curs = dbobj.curs()
+
     for g in games:
         sql = """
             INSERT IGNORE INTO game (%s) VALUES (%s)
         """ % (','.join([field for field,val in sorted(g.items())]),','.join(["'%s'" % val for field,val in sorted(g.items())]))
         
-        dbobj.query(sql)
+        curs.execute(sql)
+
+        # Get the game id -- on ignore, lastrowid won't return a value
+        curs.execute("""
+            SELECT id
+            FROM game
+            WHERE date_played = '%s' AND home_team_id = %s AND away_team_id = %s
+        """ % (g['date_played'], g['home_team_id'], g['away_team_id']))
+        game_id = curs.fetchone()
+        print game_id
+
+
+        if g['season_type'] == 'POST':
+            curs.execute("""
+                SELECT id 
+                FROM
+                    playoff_series
+                WHERE
+                    season = '%s'
+                    AND (team1_id = '%s' AND team2_id = '%s')
+                    OR (team1_id = '%s' AND team2_id = '%s')
+            """ % (g['season'], g['home_team_id'], g['away_team_id'], g['away_team_id'], g['home_team_id']))
+            playoff_series = curs.fetchone()
+            print playoff_series
+
+            if playoff_series:
+                sql = """
+                    INSERT INTO rel_playoff_game (game_id, playoff_series_id) VALUES (%s, %s)
+                """ % (game_id[0], playoff_series[0])
+                curs.execute(sql)
+                print sql
 
 
 
@@ -104,17 +136,18 @@ def fillInAllDates():
     dt = datetime.date(2012,4,28)
 
     print dt
-    main(dt)
+    go(dt)
 
 
 
-def main(dt):
+def go(dt):
     
     html = getScoreboardDoc(dt)
     gamedata = getGameIdsAndTeams(html)
     complete_gamedata = _fillInGameData(gamedata, dt)
 
     _writeToDatabase(complete_gamedata, dt)
+    
 
 
 
