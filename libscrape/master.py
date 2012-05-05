@@ -1,4 +1,5 @@
 import sys
+import time
 import datetime
 import MySQLdb
 import os
@@ -125,6 +126,8 @@ def aftercleanOnly(dt):
 
 def getAll(dt):
 
+    step_time = time.time()
+
     dbobj = db.Db(db.dbconn_nba)
 
     # Choose games
@@ -142,6 +145,8 @@ def getAll(dt):
 
     tomorrow = dt + datetime.timedelta(days=1)
     findgames.go(tomorrow)
+
+    print "Total time: %.2f sec" % (time.time() - step_time)
 
 
 def main():
