@@ -30,10 +30,10 @@ def getGameIdsAndTeams(html):
 
     game_info = []
     for game_id in game_ids:
-        team_div = soup.findAll(id='%s-awayTeamName' % game_id)
+        team_div = soup.findAll(id='%s-aTeamName' % game_id)
         away_team_id, away_team, away_team_nbacom, away_team_nickname = findTeamName(team_div[0].a.renderContents())
 
-        team_div = soup.findAll(id='%s-homeTeamName' % game_id)
+        team_div = soup.findAll(id='%s-hTeamName' % game_id)
         home_team_id, home_team, home_team_nbacom, home_team_nickname = findTeamName(team_div[0].a.renderContents())
 
         game_info.append(
@@ -133,7 +133,7 @@ def _writeToDatabase(games, date_played):
 
 
 def fillInAllDates():
-    dt = datetime.date(2012,4,28)
+    dt = datetime.date(2012,5,12)
 
     print dt
     go(dt)
@@ -145,8 +145,8 @@ def go(dt):
     html = getScoreboardDoc(dt)
     gamedata = getGameIdsAndTeams(html)
     complete_gamedata = _fillInGameData(gamedata, dt)
-
-    _writeToDatabase(complete_gamedata, dt)
+    print complete_gamedata
+    #_writeToDatabase(complete_gamedata, dt)
     
 
 
