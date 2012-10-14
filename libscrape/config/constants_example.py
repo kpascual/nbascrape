@@ -15,6 +15,7 @@ URL_BOXSCORE_NBACOM = 'http://www.nba.com/games/game_component/dynamic/<game_id>
 
 LIST_TEAMS = ['MILWAUKEE', 'MINNESOTA', 'MIAMI', 'ATLANTA', 'BOSTON', 'DETROIT', 'DENVER', 'NEW JERSEY', 'NEW ORLEANS', 'DALLAS', 'PORTLAND', 'ORLANDO', 'TORONTO', 'CHICAGO', 'NEW YORK', 'CHARLOTTE', 'UTAH', 'GOLDEN STATE', 'CLEVELAND', 'HOUSTON', 'WASHINGTON', 'LOS ANGELES', 'PHILADELPHIA', 'PHOENIX', 'MEMPHIS', 'LOS ANGELES', 'SACRAMENTO', 'OKLAHOMA CITY', 'INDIANA', 'SAN ANTONIO']
 
+"""
 PERIODS = [
     '1 Quarter',
     '2 Quarter',
@@ -36,3 +37,35 @@ PERIODS = [
     '14 Overtime',
     '15 Overtime'
 ]
+"""
+PERIODS = {
+    '1 Quarter': 1,
+    '2 Quarter': 2,
+    '3 Quarter': 3,
+    '4 Quarter': 4,
+    '1 Overtime': 5,
+    '2 Overtime': 6,
+    '3 Overtime': 7,
+    '4 Overtime': 8,
+    '5 Overtime': 9,
+    '6 Overtime': 10,
+    '7 Overtime': 11,
+    '8 Overtime': 12,
+    '9 Overtime': 13,
+    '10 Overtime': 14,
+    '11 Overtime': 15,
+    '12 Overtime': 16,
+    '5 Quarter': 5,
+    '6 Quarter': 6,
+    '7 Quarter': 7,
+    '8 Quarter': 8,
+    '9 Quarter': 9,
+    '10 Quarter': 10,
+    '11 Quarter': 11,
+    '12 Quarter': 12,
+    '13 Quarter': 13,
+    '14 Quarter': 14,
+    '15 Quarter': 15,
+    '16 Quarter': 16,
+}
+

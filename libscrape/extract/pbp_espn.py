@@ -56,7 +56,8 @@ class Extract:
             match = re.search('((?P<startorend>(Start|End)))\s+of\s+the\s+(?P<quarter>[0-9])(st|nd|rd|th)\s+(?P<period>(Quarter|Overtime))',cell2)
             if match:
                 period_name = '%s %s' % (match.group('quarter'), match.group('period'))
-                period_number = constants.PERIODS.index(period_name)
+                #period_number = constants.PERIODS.index(period_name)
+                period_number = constants.PERIODS[period_name]
 
                 # This variable will be either 'start' or 'end'
                 startorend = match.group('startorend').lower()
@@ -107,7 +108,8 @@ class Extract:
             match = re.search('.*(?P<num>\d)(st|nd|rd|th)\s+(?P<period_type>(Quarter|Overtime))\s+Summary.*',row)
             if match:
                 period_name = "%s %s" % (match.group('num'), match.group('period_type'))
-                period_number = constants.PERIODS.index(period_name)
+                #period_number = constants.PERIODS.index(period_name)
+                period_number = constants.PERIODS[period_name]
                 periods.append((period_number, play_number, period_name))
 
         for period_number, play_number, period_name in sorted(periods):
