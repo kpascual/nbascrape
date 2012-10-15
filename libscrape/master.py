@@ -28,6 +28,7 @@ def chooseGames(date_played):
             INNER JOIN team home_team on home_team.id = g.home_team_id
             INNER JOIN team away_team on away_team.id = g.away_team_id
         WHERE g.date_played = '%s'
+            AND g.should_fetch_data = 1
     """ % (date_played))
     return curs.fetchall()
 
@@ -144,7 +145,7 @@ def getAll(dt):
     afterclean2.main.go(gamedata, dbobj)
 
     tomorrow = dt + datetime.timedelta(days=1)
-    findgames.go(tomorrow)
+    #findgames.go(tomorrow)
 
     print "Total time: %.2f sec" % (time.time() - step_time)
 
