@@ -26,11 +26,12 @@ class Clean:
         self.date_played = self.gamedata['date_played']
         self.db = dbobj
 
-        #self.plays = [line.replace('\n','').split(',') for line in open(LOGDIR_EXTRACT + filename,'r').readlines()]
-        self.plays = self._getPlays()
+        self.plays = ''
 
 
     def cleanAll(self):
+        self.plays = self._getPlays()
+
         cleaning_functions = [
             self.guessUnknownQuarters,
             self.replaceBlankScores,
