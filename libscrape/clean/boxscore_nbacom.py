@@ -120,6 +120,8 @@ class CleanBoxScore:
 
             for p in players:
                 player_stat_line = {}
+
+                # Name split by pipe: nbacom_player_id, nbacom_player_code (i.e. dirk_nowitzki), name, status, position, jersey number
                 player_data = p['name'].split('|')
                 nbacom_player_id = player_data[0]
 

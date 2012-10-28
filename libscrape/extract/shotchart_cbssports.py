@@ -3,6 +3,7 @@ import re
 import csv
 import datetime
 import sys
+import logging
 from BeautifulSoup import BeautifulSoup
 from libscrape.config import constants
 
@@ -27,6 +28,8 @@ class ShotExtract:
         shots = self.getShotData()
         self._dumpShots(shots)
         self._dumpPlayers(home_players + away_players)
+
+        logging.info("EXTRACT - shotchart_cbssports - game_id: %s - shots extracted: %s" % (self.gamedata['id'], len(shots)))
 
 
     def getHomePlayers(self):

@@ -1,5 +1,5 @@
 import csv
-
+import logging
 from libscrape.config import db
 from libscrape.config import constants 
 import libscrape.config.constants
@@ -43,6 +43,7 @@ class CleanBoxScore:
                 player_id = existing_players[int(cbssports_id)]
             except:
                 print "player id should exist, but surrogate key not found"
+                logging.warning("CLEAN - boxscore_cbssports - game_id: %s - cant match player: '%s'" % (self.gamedata['id'],name))
                 player_id = -1
 
             fgm, fga = fg.split('-')

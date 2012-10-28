@@ -1,8 +1,12 @@
 import re
 import datetime
+import time
 import sys
 import os
+import logging
+
 import pbp_espn
+import pbp_nbacom
 import shotchart_cbssports
 import shotchart_espn
 import shotchart_nbacom
@@ -47,7 +51,9 @@ def go(tuple_games_and_files, dbobj):
 
     for gamedata,filenames in tuple_games_and_files:
 
-        print "+++ Resolving master player database"
+        print "+++ CLEAN: %s - %s" % (gamedata['id'], gamedata['abbrev'])
+
+        print "  Resolving master player database"
         obj = player.PlayerNbaCom(LOGDIR_EXTRACT + filenames['boxscore_nbacom'], gamedata, dbobj)
         obj.resolveNewPlayers()
         obj = player.PlayerCbsSports(LOGDIR_EXTRACT + filenames['shotchart_cbssports'] + '_players', gamedata, dbobj)
@@ -55,40 +61,50 @@ def go(tuple_games_and_files, dbobj):
         player.updatePlayerFullName(dbobj)
 
 
-        print "+++ Cleaning CBSSports.com shot chart data in %s" % (filenames['shotchart_cbssports'])
+        print "  CBSSports.com shot chart data"
+        step_time = time.time()
         shotvars = {
             'filename':  filenames['shotchart_cbssports'],
             'gamedata':  gamedata,
             'dbobj'   :  dbobj
         }
-        
         shotchart_cbssports.CleanShots(**shotvars).clean()
-        print "+++ Done cleaning CBSSports.com shot chart data"
+        logging.info("CLEAN - shotchart_cbssports - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
 
-        print "+++ Creating CBSSports.com boxscore data" 
+        print "  + CBSSports.com boxscore data" 
+        step_time = time.time()
         boxscore_cbssports.CleanBoxScore(gamedata, dbobj).clean()
-        print "+++ Done cleaning CBSSports.com shot chart data"
+        logging.info("CLEAN - boxscore_cbssports - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
 
-        print "+++ Creating NBA.com boxscore data" 
+        print "  + NBA.com boxscore data" 
+        step_time = time.time()
         boxscore_nbacom.CleanBoxScore(filenames['boxscore_nbacom'],gamedata, dbobj).clean()
-        print "+++ Done cleaning NBA.com shot chart data"
+        logging.info("CLEAN - boxscore_nbacom - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
 
-        print "+++ Cleaning ESPN play by play data in %s" % (filenames['playbyplay_espn'])
+        print "  + NBA.com play by play data" 
+        step_time = time.time()
+        pbp_nbacom.Clean(filenames['playbyplay_nbacom'],gamedata, dbobj).clean()
+        logging.info("CLEAN - playbyplay_nbacom - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
+
+        print "  + ESPN play by play data"
+        step_time = time.time()
         pbpvars = {
             'filename':  filenames['playbyplay_espn'],
             'gamedata':  gamedata,
             'dbobj'   :  dbobj
         }
         pbp_espn.Clean(**pbpvars).cleanAll()
-        print "+++ Done cleaning ESPN play by play data"
+        logging.info("CLEAN - playbyplay_espn - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
 
-        print "+++ Cleaning NBA.com shot chart data in %s" % (filenames['shotchart_nbacom'])
+        print "  + NBA.com shot chart data"
+        step_time = time.time()
         shotchart_nbacom.Clean(filenames['shotchart_nbacom'],gamedata, dbobj).cleanAll()
-        print "+++ Done"
+        logging.info("CLEAN - shotchart_nbacom - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
 
-        print "+++ Cleaning ESPN.com shot chart data in %s" % (filenames['shotchart_espn'])
+        print "  + ESPN.com shot chart data"
+        step_time = time.time()
         shotchart_espn.Clean(filenames['shotchart_espn'],gamedata, dbobj).cleanAll()
-        print "+++ Done"
+        logging.info("CLEAN - shotchart_espn - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
 
 
 if __name__ == '__main__':

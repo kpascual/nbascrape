@@ -3,6 +3,7 @@ import time
 import datetime
 import MySQLdb
 import os
+import logging
 
 from libscrape.config import constants
 from libscrape.config import db
@@ -16,6 +17,8 @@ import findgames
 
 LOGDIR_SOURCE = constants.LOGDIR_SOURCE
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
+
+logging.basicConfig(filename='etl.log',level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def chooseGames(date_played):
@@ -73,7 +76,8 @@ def getExistingSourceDocs(games):
             filenames['boxscore_nbacom'] = [itm for itm in os.listdir(LOGDIR_SOURCE) if g['abbrev'] in itm and 'boxscore_nbacom' in itm][0]
         except:
             filenames['boxscore_nbacom'] = ''
-            print "No source NBA.com play by play doc found for %s" % g['abbrev']
+            print "No source NBA.com box score doc found for %s" % g['abbrev']
+
 
         if len(filenames.items()) == 7:
             gamedata.append((g,filenames))
@@ -117,6 +121,13 @@ def extractOnly(dt):
  
     extract.main.go(gamedata)
 
+def loadOnly(dt):
+    dbobj = db.Db(db.dbconn_nba)
+    games = chooseGames(dt)
+    gamedata = getExistingSourceDocs(games)
+ 
+    load.main.go(gamedata, dbobj)
+
 
 def aftercleanOnly(dt):
     dbobj = db.Db(db.dbconn_nba)
@@ -128,6 +139,7 @@ def aftercleanOnly(dt):
 def getAll(dt):
 
     step_time = time.time()
+    logging.info("MASTER - starting ETL job - date: %s" % (dt))
 
     dbobj = db.Db(db.dbconn_nba)
 
@@ -147,7 +159,9 @@ def getAll(dt):
     tomorrow = dt + datetime.timedelta(days=1)
     #findgames.go(tomorrow)
 
-    print "Total time: %.2f sec" % (time.time() - step_time)
+    time_elapsed = "Total time: %.2f sec" % (time.time() - step_time)
+    print time_elapsed
+    logging.info(time_elapsed)
 
 
 def main():
