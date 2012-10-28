@@ -3,6 +3,7 @@ import csv
 import os
 import datetime
 import json
+import logging
 from libscrape.config import db
 from libscrape.config import constants 
 
@@ -42,6 +43,7 @@ class Clean:
         shots_adjusted = self.addGameId(shots_adjusted)
 
         self._dumpFile(shots_adjusted)
+        logging.info("CLEAN - shotchart_nbacom - game_id: %s - shot count: %s" % (self.gamedata['id'], len(shots_adjusted)))
 
 
     def resolvePlayerIds(self, shots):
@@ -55,6 +57,7 @@ class Clean:
                 shot['player_id'] = players[nbacom_player_id]
             except:
                 shot['player_id'] = 0
+                logging.warning("CLEAN - shotchart_nbacom - game_id: %s - cant match player: '%s'" % (self.gamedata['id'],shot['pid']))
 
             shots_adjusted.append(shot)
 

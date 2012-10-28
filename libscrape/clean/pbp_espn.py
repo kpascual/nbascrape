@@ -3,7 +3,9 @@ import datetime
 import csv
 import difflib
 import json
+import logging
 
+import find_player
 from libscrape.config import db
 from libscrape.config import constants 
 
@@ -12,6 +14,7 @@ LOGDIR_CLEAN = constants.LOGDIR_CLEAN
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
 
+dbobj = db.Db(db.dbconn_nba)
 
 
 class Clean:
@@ -27,6 +30,26 @@ class Clean:
         self.db = dbobj
 
         self.plays = ''
+
+
+    def _clean(self):
+        self.plays = self._getPlays()
+
+        cleaning_functions = [
+            self.guessUnknownQuarters,
+            self.replaceBlankScores,
+            self.replaceWithConformedTime,
+            self.addGameId,
+            self.identifyPlays,
+            self.fillInEmptyFields
+        ]
+
+        all_plays = self.plays
+        for function_name in cleaning_functions:
+            all_plays = function_name(all_plays)
+
+        for play in all_plays:
+            print play
 
 
     def cleanAll(self):
@@ -45,6 +68,7 @@ class Clean:
         for function_name in cleaning_functions:
             all_plays = function_name(all_plays)
 
+        logging.info("CLEAN - playbyplay_espn - game_id: %s - play count: %s" % (self.gamedata['id'], len(all_plays)))
         self.dumpIntoFile(all_plays) 
 
 
@@ -52,7 +76,7 @@ class Clean:
         filename = LOGDIR_EXTRACT + self.filename
         data = [line for line in csv.reader(open(filename,'r'),delimiter=',',lineterminator='\n')]
 
-        headers = ['period','play_num','time_left','away_score','home_score','away_play','home_play']
+        headers = ['period','play_index','time_left','away_score','home_score','away_play','home_play']
     
         newdata = []
         for line in data:
@@ -169,7 +193,7 @@ class Clean:
         for (play_id, play_re, play_name) in known_plays:
             
             # Identify away play
-            match = re.search(play_re,away_play)
+            match = re.match(play_re,away_play)
             if match:
                 othervars = {}
                 for key,val in match.groupdict().items():
@@ -194,12 +218,18 @@ class Clean:
                 return (self.home_team, play_id, othervars)
 
         print "No play found: %s" % play
+        logging.warning("CLEAN - playbyplay_espn - game_id: %s - no play found: '%s'" % (self.gamedata['id'], play))
+
         return 0
 
 
 
     def _identifyPlayer(self, player_name, team):
-        players = self._getPlayerIdsInGame()
+        players = find_player._getPlayersInGame(self.gamedata['id'])
+        #print players
+
+        player_id = find_player.matchPlayerByNameApproximate(player_name,players)
+        """
         player_names = [name for player_id, name in sorted(players.items())]
         player_ids = [player_id for player_id, name in sorted(players.items())]
 
@@ -209,6 +239,8 @@ class Clean:
         else:
             player_id = 0
 
+        return player_id
+        """
         return player_id
 
 
@@ -231,6 +263,12 @@ class Clean:
     def dumpIntoFile(self, data):
         f = open(LOGDIR_CLEAN + self.filename,'wb')
         f.write(json.dumps(data))
+
+
+def main():
+    game = dbobj.query_dict("SELECT * FROM game WHERE id = 2371")[0]
+    obj = Clean(game['abbrev'] + '_playbyplay_espn',game, dbobj)
+    obj._clean()
 
 
 if __name__ == '__main__':

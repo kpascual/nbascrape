@@ -3,6 +3,7 @@ from libscrape.config import constants
 from BeautifulSoup import BeautifulSoup
 import csv
 import re
+import logging
 
 
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
@@ -14,10 +15,6 @@ class Extract:
         self.gamedata = gamedata
         self.game_name = self.gamedata['abbrev']
         self.filename = filename
-        self.soup = BeautifulSoup(self.html)
-        
-        self.table = self.soup.find(attrs={'class':'mod-data'})
-        self.numberedrows = [(i,row) for i,row in enumerate(self.table.findAll('tr'))]
 
         self.home_team_city = self.gamedata['home_team_city']
         self.away_team_city = self.gamedata['away_team_city']
@@ -26,12 +23,15 @@ class Extract:
     def extractAndDump(self):
         plays = self.extractAll()
         self.dumpToFile(plays)
+        logging.info("EXTRACT - playbyplay_espn - game_id: %s - plays extracted: %s" % (self.gamedata['id'], len(plays)))
 
 
     def extractAll(self):
-        timeouts = self.getTimeouts()
-        plays = self.getPlayData() 
-        periods = self.getPeriodRanges()
+        data = self._getData()
+
+        timeouts = self._getTimeouts(data)
+        plays = self._getPlayData(data) 
+        periods = self._getPeriodRanges(data)
         allplays = sorted(timeouts + plays)
 
         plays_with_quarters = []
@@ -44,9 +44,21 @@ class Extract:
         return plays_with_quarters 
 
 
+    def _getData(self):
+        self.soup = BeautifulSoup(self.html)
+        
+        table = self.soup.find(attrs={'class':'mod-data'})
+        if table:
+            rows = table.findAll('tr')
+            if rows:
+                numberedrows = [(i,row) for i,row in enumerate(table.findAll('tr'))]
+                return numberedrows
 
-    def getPeriodIndexes(self):
-        period_data = [[play_number] + map(lambda tablecell: tablecell.renderContents(),row.findAll('td')) for play_number, row in self.numberedrows if len(row.findAll('td')) == 2]
+        return []
+
+
+    def _getPeriodIndexes(self, rows):
+        period_data = [[play_number] + map(lambda tablecell: tablecell.renderContents(),row.findAll('td')) for play_number, row in rows if len(row.findAll('td')) == 2]
         periods = [line for line in period_data if 'Start of the' in line[2] or 'End of the' in line[2] or 'End Game' in line[1]]
 
         # Get the start and ending play numbers for each period in the game
@@ -66,12 +78,12 @@ class Extract:
                 else:
                     period_startend[period_number][startorend] = play_number
      
-        cleaned = self.cleanMissingPeriodRanges(period_startend)
+        cleaned = self.cleanMissingPeriodRanges(period_startend, rows)
         return cleaned
 
 
-    def cleanMissingPeriodRanges(self, periods):
-        backup_periods = self.makeBackupPeriodRanges()
+    def cleanMissingPeriodRanges(self, periods, rows):
+        backup_periods = self._makeBackupPeriodRanges(rows)
 
         cleaned_periods = {}
         for period_number, vals in periods.items():
@@ -88,9 +100,9 @@ class Extract:
         return cleaned_periods
 
 
-    def getPeriodRanges(self):
+    def _getPeriodRanges(self, rows):
 
-        periods = self.getPeriodIndexes()
+        periods = self._getPeriodIndexes(rows)
         newdata = []
         for key, vals in periods.items():
             for play_index in range(vals['start'], vals['end'] + 1):
@@ -99,11 +111,11 @@ class Extract:
         return dict(newdata)
 
         
-    def makeBackupPeriodRanges(self):
+    def _makeBackupPeriodRanges(self, rows):
         periods = []
         dict_periods = {}
 
-        rows = [(play_number, t.renderContents()) for play_number, row in self.numberedrows for t in row.findAll('td') if len(row.findAll('td')) == 1]
+        rows = [(play_number, t.renderContents()) for play_number, row in rows for t in row.findAll('td') if len(row.findAll('td')) == 1]
         for play_number,row in rows:
             match = re.search('.*(?P<num>\d)(st|nd|rd|th)\s+(?P<period_type>(Quarter|Overtime))\s+Summary.*',row)
             if match:
@@ -123,8 +135,8 @@ class Extract:
         return dict_periods
 
  
-    def getTimeouts(self):
-        cells = [[i] + map(lambda x: x.renderContents(),row.findAll('td')) for i,row in self.numberedrows if len(row.findAll('td')) == 2]
+    def _getTimeouts(self, rows):
+        cells = [[i] + map(lambda x: x.renderContents(),row.findAll('td')) for i,row in rows if len(row.findAll('td')) == 2]
         timeouts = [line for line in cells if 'timeout' in line[2]]
         
         cleaned_timeouts = []
@@ -132,15 +144,17 @@ class Extract:
             if self.home_team_city.lower() in action.lower():
                 cleaned_timeouts.append((counter, time_left,'','','',action.replace(self.home_team_city.capitalize(),'')))
        
-            if self.away_team_city.lower() in action.lower():
+            elif self.away_team_city.lower() in action.lower():
                 cleaned_timeouts.append((counter, time_left,'','',action.replace(self.away_team_city.capitalize(),''),''))
+            else:
+                cleaned_timeouts.append((counter, time_left,'','',action,''))
 
 
         return cleaned_timeouts
 
 
-    def getPlayData(self):
-        rows = [[play_number] + [t.renderContents() for t in row.findAll('td')] for play_number, row in self.numberedrows if len(row.findAll('td')) == 4]
+    def _getPlayData(self, rows):
+        rows = [[play_number] + [t.renderContents() for t in row.findAll('td')] for play_number, row in rows if len(row.findAll('td')) == 4]
 
         newrows = []        
         for (index, time_left, away, score, home) in rows:

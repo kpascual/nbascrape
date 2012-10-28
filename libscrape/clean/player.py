@@ -8,7 +8,7 @@ from libscrape.config import db
 from libscrape.config import constants 
 
 
-logging.basicConfig(format='%(asctime)s %(message)s',filename='player.log',level=logging.DEBUG)
+#logging.basicConfig(format='%(asctime)s %(message)s',filename='player.log',level=logging.DEBUG)
 # Script to resolve player differences between NBA.com, CBSSports.com, and ESPN.com sources
 # Use NBA.com and CBSSports first, because they're more well-defined
 
@@ -87,11 +87,11 @@ class PlayerNbaCom:
                     # Add to resolved player table
                     result = self.db.query("""
                         INSERT INTO player
-                            (nbacom_player_id, last_name, first_name, date_found) 
-                        VALUES ("%s","%s","%s","%s")
-                    """ % (nbacom_player_id, last_name, first_name, self.date_played))
+                            (nbacom_player_id, nbacom_player_tag, last_name, first_name, date_found) 
+                        VALUES ("%s","%s","%s","%s","%s")
+                    """ % (nbacom_player_id, player_tag, last_name, first_name, self.date_played))
 
-                    logging.debug("Found new player in NBA.com files: %s" % (row[2]))
+                    logging.info("PLAYER - game_id: %s - Found new player in NBA.com files: %s" % (self.gamedata['id'], row[2]))
 
                 else:
                     # we found a matching record, skip.
@@ -135,9 +135,7 @@ class PlayerNbaCom:
                 self.db.query("""
                     UPDATE player_team_history SET end_date = "%s" WHERE id = %s
                 """ % (self.date_played, player_team_history_id))
-                logging.info("""
-                    Closing out player team history for player_id: %s, player_team_history_id: %s
-                """ % (player_id, player_team_history_id))
+                logging.info("""PLAYER - game_id: %s - Closing out player team history for player_id: %s, player_team_history_id: %s""" % (self.gamedata['id'], player_id, player_team_history_id))
 
             # Add new record
             self.db.query("""
@@ -149,9 +147,7 @@ class PlayerNbaCom:
                 WHERE
                     p.id = "%s"
             """ % (team_id, self.date_played, player_id))
-            logging.info("""
-                Added new player team history for player_id %s; date: %s; team: %s
-            """ % (player_id, self.date_played, team_id))
+            logging.info("""PLAYER - game_id: %s - Added new player team history for player_id %s; date: %s; team: %s""" % (self.gamedata['id'], player_id, self.date_played, team_id))
 
 
 class PlayerCbsSports: 

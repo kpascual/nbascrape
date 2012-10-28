@@ -31,13 +31,23 @@ def updateBoxScoreTeamIds():
         clean.boxscore_nbacom.CleanBoxScore(filename,game,dbobj).clean()
         print "+++ Loading NBA.com boxscore data %s"  % (game['abbrev'])
         load.main.Load(dbobj).loadBoxScoreNbaCom(filename)
-        
+       
+
+def dumpPlayByPlay():
+    sql = """
+        select g.abbrev, p.period, p.deciseconds_left, p.away_score, p.home_score, p.play_desc from playbyplay_espn p inner join game g on g.id = p.game_id where g.season = '2011-2012' and g.season_type IN ('REG','POST')
+    """ 
+    dbobj = db.Db(db.dbconn_nba)
+
+    result = dbobj.query(sql)
+    print result[:5]
+
 
 def main():
 
-    last = datetime.date(2012,1,31)
+    last = datetime.date(2012,4,26)
 
-    first = datetime.date(2012,1,12)
+    first = datetime.date(2012,1,21)
 
     while first < last:
         #master.restartFromExtract(first)
@@ -46,5 +56,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    dumpPlayByPlay()
 
