@@ -53,7 +53,7 @@ def go(tuple_games_and_files, dbobj):
 
         print "+++ CLEAN: %s - %s" % (gamedata['id'], gamedata['abbrev'])
 
-        print "  Resolving master player database"
+        print "  + Player database"
         obj = player.PlayerNbaCom(LOGDIR_EXTRACT + filenames['boxscore_nbacom'], gamedata, dbobj)
         obj.resolveNewPlayers()
         obj = player.PlayerCbsSports(LOGDIR_EXTRACT + filenames['shotchart_cbssports'] + '_players', gamedata, dbobj)
@@ -61,7 +61,7 @@ def go(tuple_games_and_files, dbobj):
         player.updatePlayerFullName(dbobj)
 
 
-        print "  CBSSports.com shot chart data"
+        print "  + CBSSports.com shot chart data"
         step_time = time.time()
         shotvars = {
             'filename':  filenames['shotchart_cbssports'],
