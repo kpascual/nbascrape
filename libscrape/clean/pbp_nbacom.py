@@ -72,11 +72,12 @@ class Clean:
                         team_id = tid
 
                 if team_id == 0:
-                    logging.warning("CLEAN - playbyplay_nbacom - game_id: ? - cant find team: '%s'" % (self.game['id'],playdata['tm']))
+                    logging.warning("CLEAN - playbyplay_nbacom - game_id: ? - cant find team: '%s'" % (playdata['tm']))
 
                 playdata['team_id'] = team_id
 
             if playdata['player_code']: 
+                player_pool = []
                 if playdata['team_id'] == self.game['home_team_id']:
                     player_pool = home_players
                 elif playdata['team_id'] == self.game['away_team_id']:
