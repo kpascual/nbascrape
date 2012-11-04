@@ -176,28 +176,28 @@ class CleanBoxScore:
         if data['fg']:
             data['fgm'] = data['fg'].split('-')[0]
             data['fga'] = data['fg'].split('-')[1]
-            del data['fg']
         else:
             data['fgm'] = 0
             data['fga'] = 0
+        del data['fg']
         
         # Split free throws in to made/attempted
         if data['ft']:
             data['ftm'] = data['ft'].split('-')[0]
             data['fta'] = data['ft'].split('-')[1]
-            del data['ft']
         else:
             data['ftm'] = 0
             data['fta'] = 0
+        del data['ft']
         
         # Split three pointers in to made/attempted
         if data['threept']:
             data['threeptm'] = data['threept'].split('-')[0]
             data['threepta'] = data['threept'].split('-')[1]
-            del data['threept']
         else:
             data['threeptm'] = 0
             data['threepta'] = 0
+        del data['threept']
 
         return data
         

@@ -32,37 +32,57 @@ def writeToFile(filename, list_plays):
     f.close()
 
 
+def func_shotchart_cbssports(game, filename):
+    params = {
+        'html': open(LOGDIR_SOURCE + filename,'r').read(),
+        'filename':  filename,
+        'gamedata': game
+    }
+    shotchart_cbssports.ShotExtract(**params).extractAndDump()
+
+
+def func_playbyplay_espn(game, filename):
+    params = {
+        'html': open(LOGDIR_SOURCE + filename,'r').read(),
+        'filename':  filename,
+        'gamedata':  game
+    }
+    pbp_espn.Extract(**params).extractAndDump()
+
+
+def func_shotchart_espn(game, filename):
+    shotchart_espn.copyFile(filename)
+
+
+def func_shotchart_nbacom(game, filename):
+    all_nbacom.copyFile(filename)
+
+
+def func_playbyplay_nbacom(game, filename):
+    all_nbacom.copyFile(filename)
+
+
+def func_boxscore_nbacom(game, filename):
+    all_nbacom.copyFile(filename)
+
+
+def func_boxscore_cbssports(game, filename):
+    pass
+
+
 def go(sourcedocs):
 
-    for gamedata,filenames in sourcedocs:
+    for gamedata, files in sourcedocs:
         print "+++ EXTRACT: %s - %s" % (gamedata['id'], gamedata['abbrev'])
 
-        print "  + CBSSports.com shot chart: %s" % (filenames['shotchart_cbssports'])
-        step_time = time.time()
-        shotvars = {
-            'html': open(LOGDIR_SOURCE + filenames['shotchart_cbssports'],'r').read(),
-            'filename':  filenames['shotchart_cbssports'],
-            'gamedata': gamedata
-        }
-        shotchart_cbssports.ShotExtract(**shotvars).extractAndDump()
-        logging.info("EXTRACT - shotchart_cbssports - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
+        for f in files.keys():
+            print "  + %s" % (f)
+            step_time = time.time()
 
-        print "  + ESPN.com play by play: %s" % (filenames['playbyplay_espn'])
-        step_time = time.time()
-        pbpvars = {
-            'html': open(LOGDIR_SOURCE + filenames['playbyplay_espn'],'r').read(),
-            'filename':  filenames['playbyplay_espn'],
-            'gamedata':  gamedata
-        }
-        pbp_espn.Extract(**pbpvars).extractAndDump()
-        logging.info("EXTRACT - playbyplay_espn - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
+            globals()["func_" + f](gamedata, files[f])
 
-        print "  + Pass ESPN shot chart file"
-        shotchart_espn.copyFile(filenames['shotchart_espn'])
+            logging.info("EXTRACT - %s - game_id: %s - : time_elapsed %.2f" % (f, gamedata['id'], time.time() - step_time))
 
-        print "  + Pass all NBA.com (shot chart, play by play, box score)"
-        for f in [filenames['shotchart_nbacom'],filenames['playbyplay_nbacom'],filenames['boxscore_nbacom']]:
-            all_nbacom.copyFile(f)
 
 
 if __name__ == '__main__':

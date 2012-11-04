@@ -47,20 +47,70 @@ def main():
     #cleanCBSSportsPlayers(list_cbssports_players)
 
 
+def func_shotchart_cbssports(game, filename, dbobj):
+    shotvars = {
+        'filename':  filename,
+        'gamedata':  game,
+        'dbobj'   :  dbobj
+    }
+    shotchart_cbssports.CleanShots(**shotvars).clean()
+
+
+def func_boxscore_cbssports(game, filename, dbobj):
+    boxscore_cbssports.CleanBoxScore(game, dbobj).clean()
+
+
+def func_playbyplay_espn(game, filename, dbobj):
+    pbpvars = {
+        'filename':  filename,
+        'gamedata':  game,
+        'dbobj'   :  dbobj
+    }
+    pbp_espn.Clean(**pbpvars).cleanAll()
+
+
+def func_shotchart_espn(game, filename, dbobj):
+    shotchart_espn.Clean(filename,game, dbobj).cleanAll()
+
+
+def func_playbyplay_nbacom(game, filename, dbobj):
+    pbp_nbacom.Clean(filename,game, dbobj).clean()
+
+
+def func_shotchart_nbacom(game, filename, dbobj):
+    shotchart_nbacom.Clean(filename,game, dbobj).cleanAll()
+
+
+def func_boxscore_nbacom(game, filename, dbobj):
+    boxscore_nbacom.CleanBoxScore(filename,game, dbobj).clean()
+
+
 def go(tuple_games_and_files, dbobj):
 
-    for gamedata,filenames in tuple_games_and_files:
+    for gamedata,files in tuple_games_and_files:
 
         print "+++ CLEAN: %s - %s" % (gamedata['id'], gamedata['abbrev'])
 
         print "  + Player database"
-        obj = player.PlayerNbaCom(LOGDIR_EXTRACT + filenames['boxscore_nbacom'], gamedata, dbobj)
-        obj.resolveNewPlayers()
-        obj = player.PlayerCbsSports(LOGDIR_EXTRACT + filenames['shotchart_cbssports'] + '_players', gamedata, dbobj)
-        obj.resolveNewPlayers()
-        player.updatePlayerFullName(dbobj)
+        if 'boxscore_nbacom' in files:
+            obj = player.PlayerNbaCom(LOGDIR_EXTRACT + files['boxscore_nbacom'], gamedata, dbobj)
+            obj.resolveNewPlayers()
+    
+        if 'shotchart_cbssports' in files:
+            obj = player.PlayerCbsSports(LOGDIR_EXTRACT + files['shotchart_cbssports'] + '_players', gamedata, dbobj)
+            obj.resolveNewPlayers()
+            player.updatePlayerFullName(dbobj)
 
 
+        for f in files.keys():
+            print "  + %s" % (f)
+            step_time = time.time()
+            globals()["func_" + f](gamedata,files[f], dbobj)
+            logging.info("CLEAN - %s - game_id: %s - : time_elapsed %.2f" % (f, gamedata['id'], time.time() - step_time))
+
+
+
+        """
         print "  + CBSSports.com shot chart data"
         step_time = time.time()
         shotvars = {
@@ -105,6 +155,7 @@ def go(tuple_games_and_files, dbobj):
         step_time = time.time()
         shotchart_espn.Clean(filenames['shotchart_espn'],gamedata, dbobj).cleanAll()
         logging.info("CLEAN - shotchart_espn - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
+        """
 
 
 if __name__ == '__main__':
