@@ -133,7 +133,7 @@ def aftercleanOnly(dt):
 
 
 def getAll(dt, files = None):
-    db_credentials = db.dbconn_nba_prod
+    db_credentials = db.dbconn_nba
     dbobj = db.Db(db_credentials)
     step_time = time.time()
 
