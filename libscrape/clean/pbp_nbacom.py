@@ -14,7 +14,6 @@ LOGDIR_CLEAN = constants.LOGDIR_CLEAN
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 LOGDIR_SOURCE = constants.LOGDIR_SOURCE
 
-dbobj = db.Db(db.dbconn_nba)
 
 
 # action_type: 1 = made, 2 = missed
@@ -28,6 +27,7 @@ class Clean:
         self.dbobj = dbobj
         self.game = gamedata
         self.filename = filename
+        self.find_player = find_player.FindPlayer(dbobj)
 
 
     def clean(self):
@@ -45,8 +45,8 @@ class Clean:
         teams = self._getTeams()
 
         # Find player
-        home_players = find_player._getTeamPlayerPool(self.game['home_team_id'])
-        away_players = find_player._getTeamPlayerPool(self.game['away_team_id'])
+        home_players = self.find_player._getTeamPlayerPool(self.game['home_team_id'])
+        away_players = self.find_player._getTeamPlayerPool(self.game['away_team_id'])
 
         cleaned_plays = []
         for i,play in enumerate(playbyplaydata):
@@ -83,7 +83,7 @@ class Clean:
                 elif playdata['team_id'] == self.game['away_team_id']:
                     player_pool = away_players
 
-                player_id = find_player.identifyPlayerByGame(playdata['player_code'], player_pool, self.game['date_played'], self.game['id'])
+                player_id = self.find_player.identifyPlayerByGame(playdata['player_code'], player_pool, self.game['date_played'], self.game['id'])
                 #print player_id
                 playdata['player_id'] = player_id
 
@@ -167,6 +167,8 @@ class Clean:
 # I think msg_type is actually play_type
 # And I think action_type is really just the shot type
 def main():
+
+    dbobj = db.Db(db.dbconn_nba)
     for id in range(2171,2172):
         game = dbobj.query_dict("SELECT * FROM game WHERE id = %s" % (id))[0]
         filename = '%s_playbyplay_nbacom' % (game['abbrev'])

@@ -2,6 +2,7 @@ import json
 import os
 import time
 import logging
+import csv
 
 from libscrape.config import db
 from libscrape.config import constants
@@ -17,137 +18,118 @@ class Load:
         self.db = dbobj
 
 
-    def loadCbsSportsShotData(self, f):
-       
-        data = json.loads(open(constants.LOGDIR_CLEAN + f, 'r').read())
-        for line in data:
-            headers = [key for key,val in sorted(line.items())]
-            vals = ['"%s"' % (val) for key,val in sorted(line.items())]
-
-            sql = """
-                REPLACE INTO shotchart_cbssports
-                (%s) VALUES
-                (%s)
-            """ % (','.join(headers), ','.join(vals))
-            self.db.query(sql)
-
-
-    def loadNbaComPlayByPlayData(self, f):
+    def load_shotchart_cbssports(self, f):
 
         data = json.loads(open(constants.LOGDIR_CLEAN + f, 'r').read())
-        for line in data:
-            headers = [key for key,val in sorted(line.items())]
-            vals = ['"%s"' % (val) for key,val in sorted(line.items())]
-
-            sql = """
-                REPLACE INTO playbyplay_nbacom
-                (%s) VALUES
-                (%s)
-            """ % (','.join(headers), ','.join(vals))
-            self.db.query(sql)
+        self.db.insert_or_update('shotchart_cbssports',data)
 
 
-    def loadEspnPlayByPlayData(self, f):
+    def load_playbyplay_nbacom(self, f):
 
         data = json.loads(open(constants.LOGDIR_CLEAN + f, 'r').read())
-        for line in data:
-            headers = [key for key,val in sorted(line.items())]
-            vals = ['"%s"' % (val) for key,val in sorted(line.items())]
-
-            sql = """
-                REPLACE INTO playbyplay_espn
-                (%s) VALUES
-                (%s)
-            """ % (','.join(headers), ','.join(vals))
-            self.db.query(sql)
+        self.db.insert_or_update('playbyplay_nbacom',data)
 
 
-    def loadCbsSportsBoxScore(self, f):
+    def load_playbyplay_espn(self, f):
 
-        str_fields = open(constants.LOGDIR_CLEAN + f, 'r').readline()
-        sql = """
-            LOAD DATA LOCAL INFILE '%s' REPLACE
-            INTO TABLE boxscore_cbssports
-            FIELDS TERMINATED BY ','
-            LINES TERMINATED BY '\n'
-            IGNORE 1 LINES
-            (%s)
-        """ % (constants.LOGDIR_CLEAN + f, str_fields)
-        self.db.query(sql)
+        data = json.loads(open(constants.LOGDIR_CLEAN + f, 'r').read())
+        self.db.insert_or_update('playbyplay_espn',data)
 
 
-    def loadShotChartNbaCom(self, f):
+    def load_boxscore_cbssports(self, f):
+
+        data = open(constants.LOGDIR_CLEAN + f, 'r').readlines()
+        data = list(csv.reader(open(constants.LOGDIR_CLEAN + f, 'r'),delimiter=',',lineterminator='\n'))
+        fields = data[0]
+        datapoints = data[1:]
+
+        newdata = []
+        for line in datapoints:
+            newdata.append(dict(zip(fields,line)))
+        
+        self.db.insert_or_update('boxscore_cbssports',newdata)
+
+
+    def load_shotchart_nbacom(self, f):
         shots = json.loads(open(LOGDIR_CLEAN + f,'r').readline())
+
+        newshots = []
         for shot in shots:
-            sql = """
-                REPLACE INTO shotchart_nbacom
-                (game_id, player_id, x, y, shot_type_nbacom_id, nbacom_play_num, period, deciseconds_left, team_id,  is_shot_made) VALUES
-                (%s, %s, "%s", "%s", %s, %s, %s, %s, %s, %s)
-            """ % (
-                shot['game_id'], shot['player_id'], shot['x'], shot['y'], shot['act'], shot['id'],
-                shot['prd'], shot['time'], shot['tm'], shot['result']
-            )
+            # Re-key shots
+            shot['shot_type_nbacom_id'] = shot['act']
+            shot['nbacom_play_num'] = shot['id']
+            shot['period'] = shot['prd']
+            shot['deciseconds_left'] = shot['time']
+            shot['team_id'] = shot['tm']
+            shot['is_shot_made'] = shot['result']
 
-            self.db.query(sql)
+            del shot['act']
+            del shot['id']
+            del shot['prd']
+            del shot['pid']
+            del shot['s_clk']
+            del shot['pts']
+            del shot['time']
+            del shot['tm']
+            del shot['result']
+
+            newshots.append(shot)
+
+        self.db.insert_or_update('shotchart_nbacom',newshots)
 
 
-    def loadBoxScoreNbaCom(self, f):
+    def load_boxscore_nbacom(self, f):
         data = json.loads(open(LOGDIR_CLEAN + f,'r').readline())
+
+        newdata = []
         for line in data:
-            sql = """
-                REPLACE INTO boxscore_nbacom
-                (game_id, player_id, team_id, is_dnp, time_played, sec_played, fgm, fga, threeptm, threepta, ftm, fta,
-                off_reb, def_reb, total_reb, assists, personal_fouls, steals, turnovers, blocks, blocks_against, 
-                plusminus, total_points, unknown12)
-                VALUES
-                (%s, %s, %s, %s, "%s", %s, %s, %s, %s, %s, %s, %s, 
-                %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                "%s", %s, %s)
-            """ % (
-                line['game_id'], line['player_id'], line['team_id'], line['is_dnp'], line['time_played'], line['sec_played'], 
-                line['fgm'], line['fga'], line['threeptm'], line['threepta'], line['ftm'], line['fta'],
-                line['off_reb'], line['def_reb'], line['total_reb'], line['assists'], line['pfouls'],
-                line['steals'], line['turnovers'], line['blocks'], line['blocks_against'], line['plusminus'],
-                line['total_points'], line['unknown12']
-            )
+            line['personal_fouls'] = line['pfouls']
+            del line['pfouls']
+            del line['unknown13']
 
-            self.db.query(sql)
+            newdata.append(line)
+
+        self.db.insert_or_update('boxscore_nbacom',newdata)
 
 
-    def loadShotChartEspn(self, f):
+    def load_shotchart_espn(self, f):
         shots = json.loads(open(LOGDIR_CLEAN + f,'r').readline())
+
+        newshots = []
         for shot in shots:
-            sql = """
-                REPLACE INTO shotchart_espn
-                (game_id, player_id, x, y, shot_type, espn_play_num, period, deciseconds_left, team_id,  is_shot_made, distance)
-                VALUES
-                (%s, %s, "%s", "%s", "%s", %s, %s, %s, %s, %s, %s)
-            """ % (
-                shot['game_id'], shot['player_id'], shot['x'], shot['y'], shot['shot_type'], shot['id'],
-                shot['qtr'], shot['time_left'], shot['t'], shot['result'], shot['distance']
-            )
+            shot['espn_play_num'] = shot['id']
+            shot['period'] = shot['qtr']
+            shot['deciseconds_left'] = shot['time_left']
+            shot['team_id'] = shot['t']
+            shot['is_shot_made'] = shot['result']
+            shot['shot_desc'] = shot['d']
+            
+            del shot['id']
+            del shot['qtr']
+            del shot['time_left']
+            del shot['t']
+            del shot['d']
+            del shot['p']
+            del shot['min']
+            del shot['made']
+            del shot['pid']
+            del shot['sec']
+            del shot['result']
 
-            self.db.query(sql)
+            newshots.append(shot)
+
+        self.db.insert_or_update('shotchart_espn',newshots)
 
 
-    def loadBoxScoreNbaComGameStats(self, f):
+    def load_game_stats(self, f):
         stats = json.loads(open(LOGDIR_CLEAN + f,'r').readline())
-
-        headers = [key for key,val in sorted(stats.items())]
-        vals = ['"%s"' % (val) for key,val in sorted(stats.items())]
-
-        sql = """
-            REPLACE INTO game_stats
-            (%s) VALUES
-            (%s)
-        """ % (','.join(headers), ','.join(vals))
-        self.db.query(sql)
-
+        self.db.insert_or_update('game_stats',[stats])
 
 
 def go(tuple_games_and_files, dbobj):
     obj = Load(dbobj)
 
+    """
     funcs = [
         (obj.loadCbsSportsShotData,'shotchart_cbssports',''),
         (obj.loadNbaComPlayByPlayData,'playbyplay_nbacom',''),
@@ -159,15 +141,28 @@ def go(tuple_games_and_files, dbobj):
         (obj.loadBoxScoreNbaComGameStats,'boxscore_nbacom','_game_stats')
 
     ]
+    """
 
-    for gamedata, filenames in tuple_games_and_files:
+    for gamedata, files in tuple_games_and_files:
         print "Loading %s" % (gamedata['abbrev'])
         s_time = time.time()
 
+        for f in files.keys():
+            step_time = time.time()
+            getattr(obj,"load_" + f)(files[f])
+            print "  Loaded %s: %.2f sec" % (f, time.time() - step_time)
+
+            if f == 'boxscore_nbacom':
+                getattr(obj,'load_game_stats')(files[f] + '_game_stats')
+
+
+
+        """
         for func, filename, opt_extension in funcs:
             step_time = time.time()
             func(filenames[filename] + opt_extension)
             print "  Loaded %s: %.2f sec" % (func.__name__, time.time() - step_time)
+        """
 
         logging.info("LOAD - game_id: %s - time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
         

@@ -21,11 +21,8 @@ LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 logging.basicConfig(filename='etl.log',level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def chooseGames(date_played):
-    conn = MySQLdb.connect(**db.dbconn_nba)
-    curs = conn.cursor(MySQLdb.cursors.DictCursor)
-
-    curs.execute("""
+def chooseGames(date_played, dbobj):
+    return dbobj.query_dict("""
         SELECT g.*, home_team.city home_team_city, away_team.city away_team_city 
         FROM game g 
             INNER JOIN team home_team on home_team.id = g.home_team_id
@@ -33,7 +30,6 @@ def chooseGames(date_played):
         WHERE g.date_played = '%s'
             AND g.should_fetch_data = 1
     """ % (date_played))
-    return curs.fetchall()
 
 
 def getExistingSourceDocs(games):
@@ -136,19 +132,23 @@ def aftercleanOnly(dt):
     afterclean2.main.go(gamedata, dbobj)
 
 
-def getAll(dt):
-
+def getAll(dt, files = None):
+    db_credentials = db.dbconn_nba
+    dbobj = db.Db(db_credentials)
     step_time = time.time()
-    logging.info("MASTER - starting ETL job - date: %s" % (dt))
 
-    dbobj = db.Db(db.dbconn_nba)
+    logging.info("MASTER - starting ETL job - date: %s - database: %s" % (dt, db_credentials['db']))
+    # Default set of files/tables to populate
+    if not files:
+        files = ['boxscore_nbacom','boxscore_cbssports','playbyplay_espn','playbyplay_nbacom','shotchart_cbssports','shotchart_espn','shotchart_nbacom']
 
     # Choose games
-    games = chooseGames(dt)
+    games = chooseGames(dt, dbobj)
 
     # MAIN ETL PROCESS
+    print "+++ MASTER ETL - files: %s - database: %s" % (str(files), db_credentials['db'])
     # Get source
-    gamedata = source.main.go(games)
+    gamedata = source.main.go(games, files)
 
     extract.main.go(gamedata)
     clean.main.go(gamedata, dbobj)
@@ -164,18 +164,44 @@ def getAll(dt):
     logging.info(time_elapsed)
 
 
+def fixOld():
+    dbobj = db.Db(db.dbconn_nba)
+    games = dbobj.query_dict("""
+        SELECT g.*, home_team.city home_team_city, away_team.city away_team_city 
+        FROM game g 
+            INNER JOIN team home_team on home_team.id = g.home_team_id
+            INNER JOIN team away_team on away_team.id = g.away_team_id
+        WHERE 
+            g.id IN (321,596,866,1074,1249,1263,1436,1526,1653,1654,1655,1656,1657,1658,1659,1660,1661,1662,1663,1664,1673,1674,1675,1676,1677,1678,1679,1680,1681,1682,1683,1684,1685,1686,1687,1688,1689,1690,1691,1692,1693,1694,1695,1696,1697,1698,1699,1700,1701,1702,1703,1704,1705,1706,1707,1708,1709,1710,1711,1712,1713,1714,1715,1716,1717,1718,1719,1720,1721,1722,1723,1724,2071);
+    """)
+    files = ['boxscore_nbacom','boxscore_cbssports','playbyplay_espn','playbyplay_nbacom','shotchart_cbssports','shotchart_espn','shotchart_nbacom']
+    gamedata = source.main.go(games, files)
+
+    extract.main.go(gamedata)
+    clean.main.go(gamedata, dbobj)
+    load.main.go(gamedata, dbobj)
+
+    afterclean2.main.go(gamedata, dbobj)
+
+
+
 def main():
 
     dbobj = db.Db(db.dbconn_nba)
 
+    files = []
     try:
         dt = sys.argv[1]
         dt = datetime.date(*map(int,dt.split('-')))
+
+        if len(sys.argv) > 2:
+            files = sys.argv[2:]
     except:
         dt = datetime.date.today() - datetime.timedelta(days=1)
 
     print dt
-    getAll(dt)
+    getAll(dt,files)
+    #fixOld()
     
 
 if __name__ == '__main__':

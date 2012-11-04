@@ -28,6 +28,7 @@ class Clean:
         self.game_id = self.gamedata['id']
         self.date_played = self.gamedata['date_played']
         self.db = dbobj
+        self.find_player = find_player.FindPlayer(dbobj)
 
         self.plays = ''
 
@@ -143,14 +144,22 @@ class Clean:
     def identifyPlays(self, plays):
         cleaned = []
         for line in plays:
-        #for (period, idx, time_left, away_score, home_score, away_play, home_play) in plays:
-            team_id, play_espn_id, othervars = self._findPlay(line['away_play'], line['home_play'])
-
-            line['play_espn_id'] = play_espn_id
-            line['team_id'] = team_id
+            # Define the team_id based on whether away or home table cell was filled in
             line['play_desc'] = self._resolvePlayDescription(line['away_play'], line['home_play'])
-            line.update(othervars)
+            if line['play_desc'] == line['home_play']:
+                line['team_id'] = self.home_team
+            elif line['play_desc'] == line['away_play']:
+                line['team_id'] = self.away_team
 
+            line['play_espn_id'], othervars = self._findPlay(line['play_desc'])
+
+            # Check if team_id from description is different than the away/home alignment from the text file
+            if 'team_id' in othervars.keys() and othervars['team_id'] != line['team_id']:
+                logging.warning("CLEAN - playbyplay_espn - game_id: %s - team_ids found different in play description: play_index: %s" % (self.gamedata['id'], line['play_index']))
+
+            line.update(othervars)
+        
+            # Remove home/away delineation
             del line['away_play']
             del line['home_play']
 
@@ -162,6 +171,8 @@ class Clean:
     def fillInEmptyFields(self, data):
         newdata = []
         for line in data:
+            if 'player_id' not in line.keys():
+                line['player_id'] = -1
             if 'assist_player_id' not in line.keys():
                 line['assist_player_id'] = -1
             if 'player1_id' not in line.keys():
@@ -176,9 +187,9 @@ class Clean:
 
 
     def _resolvePlayDescription(self, away_play_desc, home_play_desc):
-        if away_play_desc == '&nbsp;':
+        if away_play_desc == '&nbsp;' or away_play_desc == '':
             return home_play_desc
-        elif home_play_desc == '&nbsp;':
+        elif home_play_desc == '&nbsp;' or home_play_desc == '':
             return away_play_desc
 
         return ''
@@ -188,34 +199,28 @@ class Clean:
         return self.db.query("SELECT id,re,name FROM play_espn ORDER BY priority ASC, id ASC")
 
 
-    def _findPlay(self,away_play,home_play):
+    def _findPlay(self, play):
         known_plays = self._getKnownPlays()
         for (play_id, play_re, play_name) in known_plays:
             
-            # Identify away play
-            match = re.match(play_re,away_play)
+            match = re.match(play_re, play)
             if match:
                 othervars = {}
                 for key,val in match.groupdict().items():
                     
                     if 'player' in key:
-                        othervars[key + '_id'] = self._identifyPlayer(val, self.away_team)
+                        player_id = self._identifyPlayer(val)
+                        othervars[key + '_id'] = player_id
+
+                    elif 'team' == key:
+                        othervars['team_id'] = self._identifyTeam(val)
                     else:
                         othervars[key] = val
 
-                return (self.away_team, play_id, othervars)
+                if 'player_id' in othervars and othervars['player_id']  == 0:
+                    logging.warning("CLEAN - playbyplay_espn - game_id: %s - player not found in play_name: '%s'" % (self.gamedata['id'], play_name))
 
-            # Identify home play
-            match = re.search(play_re,home_play)
-            if match:
-                othervars = {}
-                for key,val in match.groupdict().items():
-                    if 'player' in key:
-                        othervars[key + '_id'] = self._identifyPlayer(val, self.home_team)
-                    else:
-                        othervars[key] = val
-
-                return (self.home_team, play_id, othervars)
+                return (play_id, othervars)
 
         print "No play found: %s" % play
         logging.warning("CLEAN - playbyplay_espn - game_id: %s - no play found: '%s'" % (self.gamedata['id'], play))
@@ -223,12 +228,16 @@ class Clean:
         return 0
 
 
+    def _identifyTeam(self, team_name):
+        team = self.db.query("SELECT id FROM team WHERE is_active = 1 AND (nickname = '%s' OR alternate_nickname = '%s' OR alternate_nickname2 = '%s')" % (team_name, team_name, team_name))
+        return team[0][0]
 
-    def _identifyPlayer(self, player_name, team):
-        players = find_player._getPlayersInGame(self.gamedata['id'])
+
+    def _identifyPlayer(self, player_name):
+        players = self.find_player._getPlayersInGame(self.gamedata['id'])
         #print players
 
-        player_id = find_player.matchPlayerByNameApproximate(player_name,players)
+        player_id = self.find_player.matchPlayerByNameApproximate(player_name,players)
         """
         player_names = [name for player_id, name in sorted(players.items())]
         player_ids = [player_id for player_id, name in sorted(players.items())]
@@ -266,7 +275,7 @@ class Clean:
 
 
 def main():
-    game = dbobj.query_dict("SELECT * FROM game WHERE id = 2371")[0]
+    game = dbobj.query_dict("SELECT * FROM game WHERE id = 2366")[0]
     obj = Clean(game['abbrev'] + '_playbyplay_espn',game, dbobj)
     obj._clean()
 
