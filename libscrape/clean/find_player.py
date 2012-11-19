@@ -1,10 +1,7 @@
 import difflib
-from libscrape.config import db
-from libscrape.config import constants 
 import datetime
 import logging
 
-#dbobj = db.Db(db.dbconn_nba)
 
 class FindPlayer:
 
@@ -65,6 +62,9 @@ class FindPlayer:
         if match:
             player_id = player_ids[player_names.index(match[0])]
             name = match[0]
+
+            if len(match) > 1:
+                logging.warning("CLEAN - find_player - game_id: ? - multiple matching players found: %s" % (str(match)))
         else:
             logging.warning("CLEAN - find_player - game_id: ? - cant find player: '%s'" % (player_name))
 
@@ -95,7 +95,7 @@ class FindPlayer:
             WHERE
                 g.date_played BETWEEN '%s' AND '%s'
         """ % (dt - datetime.timedelta(days=30),dt))
-        return _transformPlayersToTuples(players)
+        return self._transformPlayersToTuples(players)
 
 
     def _getAllPlayers(self):

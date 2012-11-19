@@ -138,17 +138,16 @@ def _writeToDatabase(game, date_played):
 def fillInAllDates():
 
     start_dt = datetime.date(2012,10,30)
-    end_dt = datetime.date(2013,4,29)
+    end_dt = datetime.date(2012,11,4)
     dt = start_dt
 
     while dt < end_dt:
 
-        print dt
+        #print dt
         go(dt)
 
         dt = dt + datetime.timedelta(days=1)
     
-        time.sleep(4)
 
 
 def go(dt):
@@ -161,7 +160,8 @@ def go(dt):
 
     for game in complete_gamedata:
         print game
-        _writeToDatabase(game, dt)
+        dbobj.insert_or_update('game_temp',[game])
+        #_writeToDatabase(game, dt)
     
 
 

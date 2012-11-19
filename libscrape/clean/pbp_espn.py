@@ -1,5 +1,6 @@
 import re
 import datetime
+import time
 import csv
 import difflib
 import json
@@ -29,6 +30,12 @@ class Clean:
         self.date_played = self.gamedata['date_played']
         self.db = dbobj
         self.find_player = find_player.FindPlayer(dbobj)
+
+        # Save the players for each team in this variable -- speed is slow when relying solely on find_player module
+        self.players_home = []
+        self.players_away = []
+        self.players = []
+        self.known_plays = []
 
         self.plays = ''
 
@@ -142,6 +149,7 @@ class Clean:
 
 
     def identifyPlays(self, plays):
+
         cleaned = []
         for line in plays:
             # Define the team_id based on whether away or home table cell was filled in
@@ -200,8 +208,10 @@ class Clean:
 
 
     def _findPlay(self, play):
-        known_plays = self._getKnownPlays()
-        for (play_id, play_re, play_name) in known_plays:
+        if not self.known_plays:
+            self.known_plays = self._getKnownPlays()
+
+        for (play_id, play_re, play_name) in self.known_plays:
             
             match = re.match(play_re, play)
             if match:
@@ -229,27 +239,17 @@ class Clean:
 
 
     def _identifyTeam(self, team_name):
-        team = self.db.query("SELECT id FROM team WHERE is_active = 1 AND (nickname = '%s' OR alternate_nickname = '%s' OR alternate_nickname2 = '%s')" % (team_name, team_name, team_name))
+        team = self.db.query("SELECT id FROM team WHERE is_active = 1 AND (nickname = '%s' OR alternate_nickname = '%s' OR alternate_nickname2 = '%s' OR city = '%s')" % (team_name, team_name, team_name, team_name))
         return team[0][0]
 
 
     def _identifyPlayer(self, player_name):
-        players = self.find_player._getPlayersInGame(self.gamedata['id'])
+        if not self.players:
+            self.players = self.find_player._getPlayersInGame(self.gamedata['id'])
         #print players
 
-        player_id = self.find_player.matchPlayerByNameApproximate(player_name,players)
-        """
-        player_names = [name for player_id, name in sorted(players.items())]
-        player_ids = [player_id for player_id, name in sorted(players.items())]
+        player_id = self.find_player.matchPlayerByNameApproximate(player_name,self.players)
 
-        match = difflib.get_close_matches(player_name,player_names,1, 0.8)
-        if match:
-            player_id = player_ids[player_names.index(match[0])]
-        else:
-            player_id = 0
-
-        return player_id
-        """
         return player_id
 
 

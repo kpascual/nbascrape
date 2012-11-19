@@ -1,60 +1,140 @@
-import master
+import sys
+import time
 import datetime
-import afterclean.fiveman
-import clean.boxscore_nbacom
-import load.main
+import MySQLdb
+import os
+import logging
+
+from libscrape.config import constants
 from libscrape.config import db
+from libscrape.config import config
+import source.main
+import extract.main
+import clean.main
+import load.main
+import afterclean2.main
+import findgames
 
 
-def checkClean():
-    dt = datetime.date(2010,10,26)
-    master.restartFromClean(dt)
+LOGDIR_SOURCE = constants.LOGDIR_SOURCE
+LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
+
+logging.basicConfig(filename='etl.log',level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def fillFiveman():
+def chooseGames(date_played, dbobj):
+    return dbobj.query_dict("""
+        SELECT g.*, home_team.city home_team_city, away_team.city away_team_city 
+        FROM game g 
+            INNER JOIN team home_team on home_team.id = g.home_team_id
+            INNER JOIN team away_team on away_team.id = g.away_team_id
+        WHERE g.date_played = '%s'
+            AND g.should_fetch_data = 1
+    """ % (date_played))
 
-    for i in range(1,860):
-        try:
-            afterclean.fiveman.main(i)
-            print "Fiveman for game %s completed" % i
-        except:
-            print "Couldn't find game %s" % i
 
-
-def updateBoxScoreTeamIds():
-    dbobj = db.Db(db.dbconn_nba)
-    allgames = dbobj.query_dict("SELECT * FROM game WHERE date_played <= '2012-02-27'")
-
-    for game in allgames:
-        filename = game['abbrev'] + '_boxscore_nbacom'
-        print "+++ Creating NBA.com boxscore data %s " % (game['abbrev']) 
-        clean.boxscore_nbacom.CleanBoxScore(filename,game,dbobj).clean()
-        print "+++ Loading NBA.com boxscore data %s"  % (game['abbrev'])
-        load.main.Load(dbobj).loadBoxScoreNbaCom(filename)
-       
-
-def dumpPlayByPlay():
-    sql = """
-        select g.abbrev, p.period, p.deciseconds_left, p.away_score, p.home_score, p.play_desc from playbyplay_espn p inner join game g on g.id = p.game_id where g.season = '2011-2012' and g.season_type IN ('REG','POST')
-    """ 
+def restartFromExtract(dt):
     dbobj = db.Db(db.dbconn_nba)
 
-    result = dbobj.query(sql)
-    print result[:5]
+    games = chooseGames(dt)
+    gamedata = getExistingSourceDocs(games)
+    
+    extract.main.go(gamedata)
+    clean.main.go(gamedata, dbobj)
+    load.main.go(gamedata, dbobj)
+
+
+def restartFromClean(dt):
+    dbobj = db.Db(db.dbconn_nba)
+
+    games = chooseGames(dt)
+    gamedata = getExistingSourceDocs(games)
+ 
+    clean.main.go(gamedata, dbobj)
+    load.main.go(gamedata, dbobj)
+
+
+def cleanOnly(dt):
+    dbobj = db.Db(db.dbconn_nba_test)
+
+    games = chooseGames(dt)
+    gamedata = getExistingSourceDocs(games)
+ 
+    clean.main.go(gamedata, dbobj)
+
+def extractOnly(dt):
+
+    games = chooseGames(dt)
+    gamedata = getExistingSourceDocs(games)
+ 
+    extract.main.go(gamedata)
+
+def loadOnly(dt):
+    dbobj = db.Db(db.dbconn_nba)
+    games = chooseGames(dt)
+    gamedata = getExistingSourceDocs(games)
+ 
+    load.main.go(gamedata, dbobj)
+
+
+def aftercleanOnly(dt, files = None):
+    dbobj = db.Db(config.config['db'])
+
+    if not files:
+        files = ['boxscore_nbacom','boxscore_cbssports','playbyplay_espn','playbyplay_nbacom','shotchart_cbssports','shotchart_espn','shotchart_nbacom']
+    games = chooseGames(dt, dbobj)
+    gamedata = source.main.go(games, files)
+    afterclean2.main.go(gamedata, dbobj)
+
+
+def getAll(dt, files = None):
+    dbobj = db.Db(config.config['db'])
+    step_time = time.time()
+
+    logging.info("MASTER - starting ETL job - date: %s - database: %s" % (dt, db_credentials['db']))
+    # Default set of files/tables to populate
+    if not files:
+        files = ['boxscore_nbacom','boxscore_cbssports','playbyplay_espn','playbyplay_nbacom','shotchart_cbssports','shotchart_espn','shotchart_nbacom']
+
+    # Choose games
+    games = chooseGames(dt, dbobj)
+
+    # MAIN ETL PROCESS
+    print "+++ MASTER ETL - files: %s - database: %s" % (str(files), db_credentials['db'])
+    # Get source
+    gamedata = source.main.go(games, files)
+
+    extract.main.go(gamedata)
+    clean.main.go(gamedata, dbobj)
+    load.main.go(gamedata, dbobj)
+
+    afterclean2.main.go(gamedata, dbobj)
+
+    tomorrow = dt + datetime.timedelta(days=1)
+    #findgames.go(tomorrow)
+
+    time_elapsed = "Total time: %.2f sec" % (time.time() - step_time)
+    print time_elapsed
+    logging.info(time_elapsed)
 
 
 def main():
 
-    last = datetime.date(2012,4,26)
+    dbobj = db.Db(db.dbconn_nba)
 
-    first = datetime.date(2012,1,21)
+    files = []
+    try:
+        dt = sys.argv[1]
+        dt = datetime.date(*map(int,dt.split('-')))
 
-    while first < last:
-        #master.restartFromExtract(first)
-        master.getAll(first)
-        first = first + datetime.timedelta(days=1)
+        if len(sys.argv) > 2:
+            files = sys.argv[2:]
+    except:
+        dt = datetime.date.today() - datetime.timedelta(days=1)
 
+    print dt
+    aftercleanOnly(dt,files)
+    
 
 if __name__ == '__main__':
-    dumpPlayByPlay()
-
+    main()

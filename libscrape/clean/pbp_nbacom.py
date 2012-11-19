@@ -72,7 +72,7 @@ class Clean:
                         team_id = tid
 
                 if team_id == 0:
-                    logging.warning("CLEAN - playbyplay_nbacom - game_id: ? - cant find team: '%s'" % (playdata['tm']))
+                    logging.warning("CLEAN - playbyplay_nbacom - game_id: %s - cant find team: '%s'" % (self.game['id'], playdata['tm']))
 
                 playdata['team_id'] = team_id
 
@@ -143,7 +143,7 @@ class Clean:
     def _identifyPlayType(self, play):
         #'&lt;![CDATA[(00:00.0)[POR] Team Rebound]]&gt;'
 
-        patterns = self.dbobj.query("SELECT id, re FROM play_type_nbacom")
+        patterns = self.dbobj.query("SELECT id, re FROM play_type_nbacom ORDER BY priority ASC")
 
         for i,pattern in patterns:
             match = re.match(pattern, play)
