@@ -37,7 +37,9 @@ def getAll(dt, files = None):
     dbobj = db.Db(config.config['db'])
     step_time = time.time()
 
-    logging.info("MASTER - starting ETL job - date: %s - database: %s" % (dt, config.config['db']))
+    config_no_pw = config.config['db']
+    del config_no_pw['passwd']
+    logging.info("MASTER - starting ETL job - date: %s - database: %s" % (dt, config_no_pw))
     # Default set of files/tables to populate
     if not files:
         files = ['boxscore_nbacom','boxscore_cbssports','playbyplay_espn','playbyplay_nbacom','shotchart_cbssports','shotchart_espn','shotchart_nbacom']
