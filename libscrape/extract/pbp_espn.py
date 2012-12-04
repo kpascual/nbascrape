@@ -1,12 +1,13 @@
 from libscrape.config import constants
-
 from BeautifulSoup import BeautifulSoup
 import csv
 import re
 import logging
+from libscrape.config import db
 
 
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
+LOGDIR_SOURCE = constants.LOGDIR_SOURCE
 
 class Extract:
 
@@ -85,6 +86,7 @@ class Extract:
     def cleanMissingPeriodRanges(self, periods, rows):
         backup_periods = self._makeBackupPeriodRanges(rows)
 
+        # Append info if first pass had missing info
         cleaned_periods = {}
         for period_number, vals in periods.items():
             cleaned = {'start': 0, 'end': 0}
@@ -96,6 +98,11 @@ class Extract:
             cleaned.update(vals)
             cleaned_periods[period_number] = cleaned
             del cleaned
+
+        # Check if any periods found in backup are missing from initial pass
+        for period_index, val in backup_periods.items():
+            if period_index not in cleaned_periods.keys():
+                cleaned_periods[period_index] = val
 
         return cleaned_periods
 
@@ -169,5 +176,28 @@ class Extract:
 
     def dumpToFile(self, list_data):
         writer = csv.writer(open(LOGDIR_EXTRACT + self.filename,'wb'),delimiter=',',lineterminator='\n')
-        writer.writerows(list_data)
+        writer.writerows(list_data) 
+
+
+def main():
+    dbobj = db.Db(db.dbconn_nba)
+    game = dbobj.query_dict("""
+        SELECT g.*, home_team.city home_team_city, away_team.city away_team_city 
+        FROM game g 
+            INNER JOIN team home_team on home_team.id = g.home_team_id
+            INNER JOIN team away_team on away_team.id = g.away_team_id
+        WHERE g.id = 2976
+            AND g.should_fetch_data = 1
+    """)[0]
+    filename = game['abbrev'] + '_playbyplay_espn'
+
+    obj = Extract(open(LOGDIR_SOURCE + filename,'r').read(),filename ,game)
+    data = obj._getData()
+    ranges = obj._makeBackupPeriodRanges(data)
+    #ranges = obj._getPeriodIndexes(data)
+    print ranges
+
+
+if __name__ == '__main__':
+    main()
 
