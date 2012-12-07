@@ -219,11 +219,11 @@ class Clean:
                 for key,val in match.groupdict().items():
                     
                     if 'player' in key:
-                        player_id = self._identifyPlayer(val)
+                        player_id = self._identifyPlayer(val.strip())
                         othervars[key + '_id'] = player_id
 
                     elif 'team' == key:
-                        othervars['team_id'] = self._identifyTeam(val)
+                        othervars['team_id'] = self._identifyTeam(val.strip())
                     else:
                         othervars[key] = val
 
