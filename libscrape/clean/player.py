@@ -67,17 +67,18 @@ class PlayerNbaCom:
 
 
             if nbacom_player_id:
-                self.db.query("""
-                    INSERT INTO player_nbacom_by_game
-                        (nbacom_player_id, game_id, player_tag, last_name, first_name, jersey_number, team) 
-                    VALUES ("%s","%s","%s","%s","%s","%s", "%s")
-                """ % (nbacom_player_id, self.gamedata['id'], player_tag, last_name, first_name, jersey_number, team))
+                data = {
+                    'nbacom_player_id':nbacom_player_id,'game_id':self.gamedata['id'],
+                    'player_tag':player_tag,'last_name':last_name,'first_name':first_name,
+                    'jersey_number':jersey_number,'team':team
+                }
+                self.db.insert_or_update('player_nbacom_by_game',[data])
 
                 result = self.db.query("SELECT * FROM player_nbacom WHERE nbacom_player_id = '%s'" % (nbacom_player_id))
                 if not result:
                     print "cannot find %s.  inserting into db" % (row[2])
                     sql = """
-                        INSERT INTO player_nbacom 
+                        INSERT IGNORE INTO player_nbacom 
                             (nbacom_player_id, player_tag, last_name, first_name, date_found) 
                         VALUES ("%s","%s","%s","%s","%s")
                     """ % (nbacom_player_id, player_tag, last_name, first_name, self.date_played)
@@ -86,7 +87,7 @@ class PlayerNbaCom:
 
                     # Add to resolved player table
                     result = self.db.query("""
-                        INSERT INTO player
+                        INSERT IGNORE INTO player
                             (nbacom_player_id, nbacom_player_tag, last_name, first_name, date_found) 
                         VALUES ("%s","%s","%s","%s","%s")
                     """ % (nbacom_player_id, player_tag, last_name, first_name, self.date_played))
@@ -97,7 +98,14 @@ class PlayerNbaCom:
                     # we found a matching record, skip.
                     pass
 
-                self.managePlayerTeamHistory(nbacom_player_id, team)
+                self.db.query("""
+                    UPDATE player_nbacom_by_game pnba
+                        INNER JOIN player p ON p.nbacom_player_id = pnba.nbacom_player_id
+                    SET pnba.player_id = p.id
+                    WHERE pnba.game_id = %s
+                """ % (self.gamedata['id']))
+
+                #self.managePlayerTeamHistory(nbacom_player_id, team)
     
     
     def managePlayerTeamHistory(self, nbacom_player_id, nbacom_team_code): 
