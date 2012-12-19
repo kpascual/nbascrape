@@ -70,7 +70,7 @@ class CleanBoxScore:
         data['home_tv'] = dict_home['brd'].split('|')[0]
         data['home_radio'] = dict_home['brd'].split('|')[1]
         data['home_quarter_score'] = dict_home['scr']
-        data['home_score'] = data['home_quarter_score'].split('|')[8]
+        data['home_score'] = data['home_quarter_score'].split('|')[-1]
         data['home_record'] = dict_home['rcd'].replace('/','-')
         data['home_record_conference'] = dict_home['std'].split('|')[0]
         data['home_record_division'] = dict_home['std'].split('|')[1]
@@ -81,7 +81,7 @@ class CleanBoxScore:
         data['away_tv'] = dict_away['brd'].split('|')[0]
         data['away_radio'] = dict_away['brd'].split('|')[1]
         data['away_quarter_score'] = dict_away['scr']
-        data['away_score'] = data['away_quarter_score'].split('|')[8]
+        data['away_score'] = data['away_quarter_score'].split('|')[-1]
         data['away_record'] = dict_away['rcd'].replace('/','-')
         data['away_record_conference'] = dict_away['std'].split('|')[0]
         data['away_record_division'] = dict_away['std'].split('|')[1]
