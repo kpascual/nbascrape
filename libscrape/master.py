@@ -56,12 +56,11 @@ def getAll(dt, files = None):
     clean.main.go(gamedata, dbobj)
     load.main.go(gamedata, dbobj)
 
-    #afterclean2.main.go(gamedata, dbobj)
+    afterclean2.main.go(gamedata, dbobj)
 
     tomorrow = dt + datetime.timedelta(days=1)
 
     time_elapsed = "Total time: %.2f sec" % (time.time() - step_time)
-    print time_elapsed
     logging.info(time_elapsed)
 
 
