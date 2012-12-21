@@ -66,8 +66,6 @@ def getAll(dt, files = None):
 
 def main():
 
-    dbobj = db.Db(db.dbconn_nba)
-
     files = []
     try:
         dt = sys.argv[1]
