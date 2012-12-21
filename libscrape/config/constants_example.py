@@ -5,6 +5,7 @@ LOGDIR_SOURCE = '/your_path_here/source/'
 LOGDIR_CLEAN = '/your_path_here/clean/'
 LOGDIR_LOAD = '/your_path_here/load/'
 LOGDIR_AFTERCLEAN = '/your_path_here/afterclean/'
+LOGDIR_DOCS = '/your_path_here/docs/'
 
 URL_SHOTCHART_CBSSPORTS = 'http://www.cbssports.com/nba/gametracker/shotchart/NBA_'
 URL_PLAYBYPLAY_ESPN = 'http://espn.go.com/nba/playbyplay?gameId=<game_id>&period=0'
