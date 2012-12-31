@@ -13,7 +13,6 @@ import extract.main
 import clean.main
 import load.main
 import afterclean2.main
-import findgames
 
 
 LOGDIR_SOURCE = constants.LOGDIR_SOURCE
@@ -60,16 +59,12 @@ def getAll(dt, files = None):
     afterclean2.main.go(gamedata, dbobj)
 
     tomorrow = dt + datetime.timedelta(days=1)
-    #findgames.go(tomorrow)
 
     time_elapsed = "Total time: %.2f sec" % (time.time() - step_time)
-    print time_elapsed
     logging.info(time_elapsed)
 
 
 def main():
-
-    dbobj = db.Db(db.dbconn_nba)
 
     files = []
     try:

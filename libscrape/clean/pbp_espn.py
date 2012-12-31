@@ -15,7 +15,6 @@ LOGDIR_CLEAN = constants.LOGDIR_CLEAN
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
 
-dbobj = db.Db(db.dbconn_nba)
 
 
 class Clean:
@@ -240,7 +239,11 @@ class Clean:
 
     def _identifyTeam(self, team_name):
         team = self.db.query("SELECT id FROM team WHERE is_active = 1 AND (nickname = '%s' OR alternate_nickname = '%s' OR alternate_nickname2 = '%s' OR city = '%s')" % (team_name, team_name, team_name, team_name))
-        return team[0][0]
+
+        if team:
+            return team[0][0]
+        else:
+            return -1
 
 
     def _identifyPlayer(self, player_name):
@@ -275,6 +278,7 @@ class Clean:
 
 
 def main():
+    dbobj = db.Db(db.dbconn_nba)
     game = dbobj.query_dict("SELECT * FROM game WHERE id = 2366")[0]
     obj = Clean(game['abbrev'] + '_playbyplay_espn',game, dbobj)
     obj._clean()
