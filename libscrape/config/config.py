@@ -8,3 +8,7 @@ config['db'] = db.dbconn_nba
 # Current season and season type
 config['season'] = '2012-2013'
 config['season_type'] = 'REG'
+
+
+season = '2012-2013'
+season_type = 'REG'
