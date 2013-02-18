@@ -98,12 +98,29 @@ class PlayerNbaCom:
                     # we found a matching record, skip.
                     pass
 
+                # Update player
                 self.db.query("""
                     UPDATE player_nbacom_by_game pnba
-                        INNER JOIN player p ON p.nbacom_player_id = pnba.nbacom_player_id
+                        INNER JOIN player p ON p.nbacom_player_id = pnba.nbacom_player_id 
+                        AND pnba.nbacom_player_id != '' and p.id != 0
                     SET pnba.player_id = p.id
                     WHERE pnba.game_id = %s
                 """ % (self.gamedata['id']))
+
+                # Update team
+                self.db.query("""
+                    UPDATE player_nbacom_by_game pnba
+                        INNER JOIN team t ON t.nbacom_code = pnba.team
+                    SET pnba.team_id = t.id
+                    WHERE pnba.game_id = %s
+                """ % (self.gamedata['id']))
+            else:
+                data = {
+                    'nbacom_player_id':nbacom_player_id,'game_id':self.gamedata['id'],
+                    'player_tag':player_tag,'last_name':last_name,'first_name':first_name,
+                    'jersey_number':jersey_number,'team':team
+                }
+                self.db.insert_or_update('player_nbacom_unknown_by_game',[data])
 
                 #self.managePlayerTeamHistory(nbacom_player_id, team)
     
@@ -234,7 +251,7 @@ class PlayerCbsSports:
                         AND cbssports_player_id IS NULL
                 """ % (cbssports_player_id, matched_nbacom_player_id))
             else:
-                logging.debug("Could not match player %s.  Skipping." % (full_name))
+                logging.debug("PLAYER - game_id: %s - Could not match cbs sports player %s.  Skipping." % (game_id, full_name))
                 print "Could not match player %s, %s. Skipping" % (full_name, cbssports_player_id)
                 
             # Else, check by first name/last name, game_id

@@ -144,13 +144,13 @@ def go(tuple_games_and_files, dbobj):
     """
 
     for gamedata, files in tuple_games_and_files:
-        print "Loading %s" % (gamedata['abbrev'])
+        print "+++ LOAD: %s - %s" % (gamedata['id'], gamedata['abbrev'])
         s_time = time.time()
 
         for f in files.keys():
             step_time = time.time()
             getattr(obj,"load_" + f)(files[f])
-            print "  Loaded %s: %.2f sec" % (f, time.time() - step_time)
+            print "  + %s: %.2f sec" % (f, time.time() - step_time)
 
             if f == 'boxscore_nbacom':
                 getattr(obj,'load_game_stats')(files[f] + '_game_stats')

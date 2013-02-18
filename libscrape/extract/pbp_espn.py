@@ -149,10 +149,10 @@ class Extract:
         cleaned_timeouts = []
         for (counter, time_left, action) in timeouts:
             if self.home_team_city.lower() in action.lower():
-                cleaned_timeouts.append((counter, time_left,'','','',action.replace(self.home_team_city.capitalize(),'')))
+                cleaned_timeouts.append((counter, time_left,'','','',action))
        
             elif self.away_team_city.lower() in action.lower():
-                cleaned_timeouts.append((counter, time_left,'','',action.replace(self.away_team_city.capitalize(),''),''))
+                cleaned_timeouts.append((counter, time_left,'','',action,''))
             else:
                 cleaned_timeouts.append((counter, time_left,'','',action,''))
 

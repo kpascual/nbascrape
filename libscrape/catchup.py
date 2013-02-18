@@ -13,13 +13,11 @@ import extract.main
 import clean.main
 import load.main
 import afterclean2.main
+import afterclean2.gm.main
 import findgames
 
 
-LOGDIR_SOURCE = constants.LOGDIR_SOURCE
-LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
-
-logging.basicConfig(filename='etl.log',level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='etl_catchup.log',level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def chooseGames(date_played, dbobj):
@@ -84,14 +82,13 @@ def aftercleanOnly(dt, files = None):
         files = ['boxscore_nbacom','boxscore_cbssports','playbyplay_espn','playbyplay_nbacom','shotchart_cbssports','shotchart_espn','shotchart_nbacom']
     games = chooseGames(dt, dbobj)
     gamedata = source.main.go(games, files)
-    afterclean2.main.go(gamedata, dbobj)
+    #afterclean2.main.go(gamedata, dbobj)
+    afterclean2.gm.main.postCleanGame(gamedata, dbobj)
 
-
-def getAll(dt, files = None):
+def getCoreData(dt, files = None):
     dbobj = db.Db(config.config['db'])
     step_time = time.time()
 
-    logging.info("MASTER - starting ETL job - date: %s - database: %s" % (dt, db_credentials['db']))
     # Default set of files/tables to populate
     if not files:
         files = ['boxscore_nbacom','boxscore_cbssports','playbyplay_espn','playbyplay_nbacom','shotchart_cbssports','shotchart_espn','shotchart_nbacom']
@@ -100,7 +97,7 @@ def getAll(dt, files = None):
     games = chooseGames(dt, dbobj)
 
     # MAIN ETL PROCESS
-    print "+++ MASTER ETL - files: %s - database: %s" % (str(files), db_credentials['db'])
+    #print "+++ MASTER ETL - files: %s - database: %s" % (str(files), db_credentials['db'])
     # Get source
     gamedata = source.main.go(games, files)
 
@@ -108,7 +105,29 @@ def getAll(dt, files = None):
     clean.main.go(gamedata, dbobj)
     load.main.go(gamedata, dbobj)
 
-    afterclean2.main.go(gamedata, dbobj)
+
+def getAll(dt, files = None):
+    dbobj = db.Db(config.config['db'])
+    step_time = time.time()
+
+    #logging.info("MASTER - starting ETL job - date: %s - database: %s" % (dt, db_credentials['db']))
+    # Default set of files/tables to populate
+    if not files:
+        files = ['boxscore_nbacom','boxscore_cbssports','playbyplay_espn','playbyplay_nbacom','shotchart_cbssports','shotchart_espn','shotchart_nbacom']
+
+    # Choose games
+    games = chooseGames(dt, dbobj)
+
+    # MAIN ETL PROCESS
+    #print "+++ MASTER ETL - files: %s - database: %s" % (str(files), db_credentials['db'])
+    # Get source
+    gamedata = source.main.go(games, files)
+
+    extract.main.go(gamedata)
+    clean.main.go(gamedata, dbobj)
+    load.main.go(gamedata, dbobj)
+
+    #afterclean2.main.go(gamedata, dbobj)
 
     tomorrow = dt + datetime.timedelta(days=1)
     #findgames.go(tomorrow)
@@ -120,21 +139,17 @@ def getAll(dt, files = None):
 
 def main():
 
-    dbobj = db.Db(db.dbconn_nba)
+    start_date = datetime.date(2010,11,14)
+    #end_date = datetime.date.today() - datetime.timedelta(days=1)
+    end_date = datetime.date(2010,11,16)
+    dt = start_date
 
-    files = []
-    try:
-        dt = sys.argv[1]
-        dt = datetime.date(*map(int,dt.split('-')))
+    while dt < end_date:
+        print dt
+        getCoreData(dt,['playbyplay_nbacom','playbyplay_espn','boxscore_nbacom'])
+        aftercleanOnly(dt,['playbyplay_nbacom','playbyplay_espn','boxscore_nbacom'])
+        dt = dt + datetime.timedelta(days=1)
 
-        if len(sys.argv) > 2:
-            files = sys.argv[2:]
-    except:
-        dt = datetime.date.today() - datetime.timedelta(days=1)
-
-    print dt
-    aftercleanOnly(dt,files)
-    
 
 if __name__ == '__main__':
     main()
