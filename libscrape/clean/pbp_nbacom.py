@@ -43,7 +43,7 @@ class Clean:
     def getPlayByPlayData(self):
         PLAY_TYPE_NBACOM_SUBSTITUTION = 12
         PLAY_TYPE_NBACOM_JUMPBALL = 18
-        PLAY_TYPES_NBACOM_PLAYER2_SAME = [12,14,24]
+        PLAY_TYPES_NBACOM_PLAYER2_SAME = [12,14,24,55]
 
         soup = BeautifulStoneSoup(self.xml)
         playbyplaydata = soup.findAll("event")
