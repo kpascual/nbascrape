@@ -53,6 +53,15 @@ vi db.py
   8 }
 ```
 
+* Finally, load the database with the required tables and data
+
+```
+cd your_path_here/schema
+mysql -u user_name -p database_name < core_schema.sql
+mysql -u user_name -p database_name < core_data.sql
+mysql -u user_name -p database_name < game_data.sql
+```
+
 To actually do scraping, run the master.py file within the libscrape directory, and enter the date (YYYY-MM-DD) of the games that you want to scrape.
 
 ```
