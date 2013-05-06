@@ -39,3 +39,24 @@ cp constants_example.py constants.py
 
 * Copy db_example.py to db.py, and enter your MySQL database credentials
 
+```
+cp db_example.py db.py
+```
+
+```
+vi db.py
+
+  4 dbconn_prod = {
+  5     'user': 'username_here',
+  6     'passwd': 'password_here',
+  7     'db': 'database_name_here'
+  8 }
+```
+
+To actually do scraping, run the master.py file within the libscrape directory, and enter the date (YYYY-MM-DD) of the games that you want to scrape.
+
+```
+cd your_path_here/libscrape
+python master.py 2012-10-30
+```
+
