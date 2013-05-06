@@ -12,7 +12,6 @@ import source.main
 import extract.main
 import clean.main
 import load.main
-import afterclean2.main
 
 
 LOGDIR_SOURCE = constants.LOGDIR_SOURCE
@@ -56,7 +55,6 @@ def getAll(dt, files = None):
     clean.main.go(gamedata, dbobj)
     load.main.go(gamedata, dbobj)
 
-    afterclean2.main.go(gamedata, dbobj)
 
     tomorrow = dt + datetime.timedelta(days=1)
 
