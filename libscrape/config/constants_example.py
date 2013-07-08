@@ -1,11 +1,11 @@
 # Defines where you want intermediate dump files to be stored
 
-LOGDIR_EXTRACT = '/your_path_here/extract/'
-LOGDIR_SOURCE = '/your_path_here/source/'
-LOGDIR_CLEAN = '/your_path_here/clean/'
-LOGDIR_LOAD = '/your_path_here/load/'
-LOGDIR_AFTERCLEAN = '/your_path_here/afterclean/'
-LOGDIR_DOCS = '/your_path_here/docs/'
+LOGDIR_EXTRACT = '/your_path_here/dump/extract/'
+LOGDIR_SOURCE = '/your_path_here/dump/source/'
+LOGDIR_CLEAN = '/your_path_here/dump/clean/'
+LOGDIR_LOAD = '/your_path_here/dump/load/'
+LOGDIR_AFTERCLEAN = '/your_path_here/dump/afterclean/'
+LOGDIR_DOCS = '/your_path_here/dump/docs/'
 
 URL_SHOTCHART_CBSSPORTS = 'http://www.cbssports.com/nba/gametracker/shotchart/NBA_'
 URL_PLAYBYPLAY_ESPN = 'http://espn.go.com/nba/playbyplay?gameId=<game_id>&period=0'
