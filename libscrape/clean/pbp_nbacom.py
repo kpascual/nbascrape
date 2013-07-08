@@ -165,7 +165,8 @@ class Clean:
             SELECT id, nickname, alternate_nickname, alternate_nickname2 
             FROM team 
             WHERE id IN (%s,%s)
-        """ % (self.game['home_team_id'],self.game['away_team_id']))
+                AND season = '%s'
+        """ % (self.game['home_team_id'],self.game['away_team_id'], self.game['season']))
     
         data = []
         for team in teams:

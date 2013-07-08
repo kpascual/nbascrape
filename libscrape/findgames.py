@@ -15,7 +15,7 @@ def getScoreboardDoc(dt):
     return response.read()
 
 
-def getGameIdsAndTeams(html):
+def getGameIdsAndTeams(html, season):
     soup = BeautifulSoup(html)
     links = soup.findAll(href=re.compile("/nba/conversation.*"))
     links = list(set(links))
@@ -33,10 +33,10 @@ def getGameIdsAndTeams(html):
         
         try:
             team_div = soup.findAll(id='%s-aTeamName' % game_id)
-            away_team_id, away_team, away_team_nbacom, away_team_nickname = findTeamName(team_div[0].a.renderContents())
+            away_team_id, away_team, away_team_nbacom, away_team_nickname = findTeamName(team_div[0].a.renderContents(), season)
 
             team_div = soup.findAll(id='%s-hTeamName' % game_id)
-            home_team_id, home_team, home_team_nbacom, home_team_nickname = findTeamName(team_div[0].a.renderContents())
+            home_team_id, home_team, home_team_nbacom, home_team_nickname = findTeamName(team_div[0].a.renderContents(), season)
 
             game_info.append(
                 {'espn_game_id':game_id, 'away_team': away_team, 
@@ -53,8 +53,8 @@ def getGameIdsAndTeams(html):
     return game_info
 
 
-def findTeamName(name):
-    team_data = _getTeamData()
+def findTeamName(name, season):
+    team_data = _getTeamData(season)
     
     for team in team_data:
         if name == team['nickname'] or name == team['alternate_nickname']:
@@ -65,8 +65,8 @@ def findTeamName(name):
     return (0,0) 
 
 
-def _getTeamData():
-    result = dbobj.query_dict("SELECT * FROM team WHERE is_active = 1") 
+def _getTeamData(season):
+    result = dbobj.query_dict("SELECT * FROM team WHERE is_active = 1 AND season = '%s'" % (season)) 
     return result 
 
 
@@ -137,8 +137,8 @@ def _writeToDatabase(game, date_played):
 
 def fillInAllDates():
 
-    start_dt = datetime.date(2012,10,30)
-    end_dt = datetime.date(2012,11,4)
+    start_dt = datetime.date(2013,6,20)
+    end_dt = datetime.date(2013,6,21)
     dt = start_dt
 
     while dt < end_dt:
@@ -152,16 +152,16 @@ def fillInAllDates():
 
 def go(dt):
     current_season = '2012-2013'
-    season_type = 'REG'
+    season_type = 'POST'
     
     html = getScoreboardDoc(dt)
-    gamedata = getGameIdsAndTeams(html)
+    gamedata = getGameIdsAndTeams(html, current_season)
     complete_gamedata = _fillInGameData(current_season, season_type, gamedata, dt)
 
     for game in complete_gamedata:
         print game
-        dbobj.insert_or_update('game_temp',[game])
-        #_writeToDatabase(game, dt)
+        dbobj.insert_or_update('game',[game])
+        _writeToDatabase(game, dt)
     
 
 
