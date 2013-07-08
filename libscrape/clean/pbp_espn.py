@@ -238,7 +238,13 @@ class Clean:
 
 
     def _identifyTeam(self, team_name):
-        team = self.db.query("SELECT id FROM team WHERE id IN (%s,%s) AND (nickname = '%s' OR alternate_nickname = '%s' OR alternate_nickname2 = '%s' OR city = '%s')" % (self.away_team, self.home_team, team_name, team_name, team_name, team_name))
+        team = self.db.query("""
+            SELECT id 
+            FROM team 
+            WHERE id IN (%s,%s) 
+                AND season = '%s'
+                AND (nickname = '%s' OR alternate_nickname = '%s' OR alternate_nickname2 = '%s' OR city = '%s')
+        """ % (self.away_team, self.gamedata['season'], self.home_team, team_name, team_name, team_name, team_name))
 
         if team:
             return team[0][0]
