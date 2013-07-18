@@ -255,7 +255,6 @@ class Clean:
     def _identifyPlayer(self, player_name):
         if not self.players:
             self.players = self.find_player._getPlayersInGame(self.gamedata['id'])
-        #print players
 
         player_id = self.find_player.matchPlayerByNameApproximate(player_name,self.players)
 

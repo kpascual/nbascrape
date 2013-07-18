@@ -120,6 +120,8 @@ class Clean:
                 shot['result'] = 1
             elif shot['typ'] == '2':
                 shot['result'] = 0
+            else:
+                shot['result'] = -1
                
             del shot['typ'] 
             shots_adjusted.append(shot)

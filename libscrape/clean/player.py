@@ -88,9 +88,9 @@ class PlayerNbaCom:
                     # Add to resolved player table
                     result = self.db.query("""
                         INSERT IGNORE INTO player
-                            (nbacom_player_id, nbacom_player_tag, last_name, first_name, date_found) 
-                        VALUES ("%s","%s","%s","%s","%s")
-                    """ % (nbacom_player_id, player_tag, last_name, first_name, self.date_played))
+                            (nbacom_player_id, nbacom_player_tag, last_name, first_name, full_name, date_found) 
+                        VALUES ("%s","%s","%s","%s","%s","%s")
+                    """ % (nbacom_player_id, player_tag, last_name, first_name, first_name + ' ' + last_name, self.date_played))
 
                     logging.info("PLAYER - game_id: %s - Found new player in NBA.com files: %s" % (self.gamedata['id'], row[2]))
 
