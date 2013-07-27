@@ -90,7 +90,7 @@ class Clean:
             if config.config['league'] == 'nba':
                 # X coordinate is the width of the court
                 # Y coordinate is the length
-                shot['y'] = int(shot['y']) + 50
+                newshot['y'] = int(shot['y']) + 50
             elif config.config['league'] == 'wnba':
                 # For women, the x-coordinate is actually the length of the floor, and the y-coordinate the width of the floor
                 # For vorped purposes, we need to flip them
