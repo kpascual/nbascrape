@@ -6,6 +6,7 @@ import json
 import logging
 from libscrape.config import db
 from libscrape.config import constants 
+from libscrape.config import config
 
 
 
@@ -81,14 +82,23 @@ class Clean:
         
         # The 840 total pixels for length of the court refers to the distance between the two hoops (84 ft)
         # (4 ft from baseline to each backboard, and an 18-inch diameter rim, 9 inch radius)
-        # X coordinate is the width of the court
-        # Y coordinate is the length
         # For away teams, it appears the x-coordinate is flipped 
         new_shots = [] 
         for shot in shots:
-            shot['y'] = int(shot['y']) + 50
+            newshot = shot.copy()
+
+            if config.config['league'] == 'nba':
+                # X coordinate is the width of the court
+                # Y coordinate is the length
+                shot['y'] = int(shot['y']) + 50
+            elif config.config['league'] == 'wnba':
+                # For women, the x-coordinate is actually the length of the floor, and the y-coordinate the width of the floor
+                # For vorped purposes, we need to flip them
+
+                newshot['x'] = shot['y']
+                newshot['y'] = int(shot['x']) + 50
             
-            new_shots.append(shot)
+            new_shots.append(newshot)
 
         return new_shots
 
