@@ -70,6 +70,10 @@ def func_boxscore_cbssports(game, filename):
     pass
 
 
+def func_shotchart_wnbacom(game, filename):
+    all_nbacom.copyFile(filename)
+
+
 def go(sourcedocs):
 
     for gamedata, files in sourcedocs:

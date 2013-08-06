@@ -14,6 +14,24 @@ URL_PLAYBYPLAY_NBACOM = 'http://www.nba.com/games/game_component/dynamic/<game_i
 URL_SHOTCHART_NBACOM = 'http://www.nba.com/games/game_component/dynamic/<game_id>/shotchart_all.xml'
 URL_BOXSCORE_NBACOM = 'http://www.nba.com/games/game_component/dynamic/<game_id>/boxscore.xml'
 
+URL = {
+    'nba': {
+        'SHOTCHART_CBSSPORTS': 'http://www.cbssports.com/nba/gametracker/shotchart/NBA_',
+        'PLAYBYPLAY_ESPN': 'http://espn.go.com/nba/playbyplay?gameId=<game_id>&period=0',
+        'SHOTCHART_ESPN': 'http://sports.espn.go.com/nba/gamepackage/data/shot?gameId=<game_id>',
+        'PLAYBYPLAY_NBACOM': 'http://www.nba.com/games/game_component/dynamic/<game_id>/pbp_all.xml',
+        'SHOTCHART_NBACOM': 'http://www.nba.com/games/game_component/dynamic/<game_id>/shotchart_all.xml',
+        'BOXSCORE_NBACOM': 'http://www.nba.com/games/game_component/dynamic/<game_id>/boxscore.xml'
+    },
+    'wnba': {
+        'PLAYBYPLAY_ESPN': 'http://espn.go.com/wnba/playbyplay?gameId=<game_id>&period=0',
+        'SHOTCHART_ESPN': 'http://sports.espn.go.com/wnba/gamepackage/data/shot?gameId=<game_id>',
+        'PLAYBYPLAY_NBACOM': 'http://www.wnba.com/games/game_component/dynamic/<game_id>/pbp_all.xml',
+        'SHOTCHART_NBACOM': 'http://www.wnba.com/games/game_component/dynamic/<game_id>/shotchart_all.xml',
+        'BOXSCORE_NBACOM': 'http://www.wnba.com/games/game_component/dynamic/<game_id>/boxscore.xml'
+    }
+}
+
 LIST_TEAMS = ['MILWAUKEE', 'MINNESOTA', 'MIAMI', 'ATLANTA', 'BOSTON', 'DETROIT', 'DENVER', 'NEW JERSEY', 'NEW ORLEANS', 'DALLAS', 'PORTLAND', 'ORLANDO', 'TORONTO', 'CHICAGO', 'NEW YORK', 'CHARLOTTE', 'UTAH', 'GOLDEN STATE', 'CLEVELAND', 'HOUSTON', 'WASHINGTON', 'LOS ANGELES', 'PHILADELPHIA', 'PHOENIX', 'MEMPHIS', 'LOS ANGELES', 'SACRAMENTO', 'OKLAHOMA CITY', 'INDIANA', 'SAN ANTONIO']
 
 SECONDS = {

@@ -29,14 +29,8 @@ class Clean:
 
 
     def cleanAll(self):
-        raw_shots = self.soup.findAll('event')
-        
-        home_x = []
-        home_y = []
-        away_x = []
-        away_y = []
+        shots = self.getShots()
 
-        shots = [dict(shot.attrs) for shot in raw_shots]
         shots_adjusted = self.resolveShotCoordinates(shots)
         shots_adjusted = self.resolvePlayerIds(shots_adjusted)
         shots_adjusted = self.resolveTeam(shots_adjusted)
@@ -46,6 +40,9 @@ class Clean:
         self._dumpFile(shots_adjusted)
         logging.info("CLEAN - shotchart_nbacom - game_id: %s - shot count: %s" % (self.gamedata['id'], len(shots_adjusted)))
 
+    def getShots(self):
+        raw_shots = self.soup.findAll('event')
+        return [dict(shot.attrs) for shot in raw_shots]
 
     def resolvePlayerIds(self, shots):
         players = self._getPlayerIds()
@@ -87,17 +84,9 @@ class Clean:
         for shot in shots:
             newshot = shot.copy()
 
-            if config.config['league'] == 'nba':
-                # X coordinate is the width of the court
-                # Y coordinate is the length
-                newshot['y'] = int(shot['y']) + 50
-            elif config.config['league'] == 'wnba':
-                # For women, the x-coordinate is actually the length of the floor, and the y-coordinate the width of the floor
-                # For vorped purposes, we need to flip them
-
-                newshot['x'] = shot['y']
-                newshot['y'] = int(shot['x']) + 50
-            
+            # X coordinate is the width of the court
+            # Y coordinate is the length
+            newshot['y'] = int(shot['y']) + 50
             new_shots.append(newshot)
 
         return new_shots
@@ -154,14 +143,34 @@ class Clean:
         f.write(shot_json)
 
 
+class CleanWnba(Clean):
+    def resolveShotCoordinates(self, shots):
+        new_shots = [] 
+        for shot in shots:
+            newshot = shot.copy()
+
+            # For women, the x-coordinate is actually the length of the floor, and the y-coordinate the width of the floor
+            # For vorped purposes, we need to flip them
+
+            newshot['x'] = shot['y']
+            newshot['y'] = int(shot['x']) + 50
+            
+            new_shots.append(newshot)
+
+        return new_shots
+
+
 def main():
 
-    files = [f for f in os.listdir('../../logs/extract') if 'shotchart_nbacom' in f]
-    f = '2011-12-25_LAC@GS_shotchart_nbacom'
-    gamedata = db.nba_query_dict("SELECT * FROM game WHERE id = 1267")[0]
+    dbobj = db.Db(db.dbconn_prod)
+    files = [f for f in os.listdir('../../dump/extract') if 'shotchart_nbacom' in f]
+    f = '2013-06-20_SA@MIA_shotchart_nbacom'
+    gamedata = dbobj.query_dict("SELECT * FROM game WHERE id = 4043")[0]
 
-    obj = ShotChart(f, gamedata)
-    obj.test()
+    obj = CleanWnba(f, gamedata, dbobj)
+    shots = obj.getShots()
+    print obj.resolveShotCoordinates(shots)
+
 
 
 if __name__ == '__main__':

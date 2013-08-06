@@ -85,6 +85,10 @@ def func_boxscore_nbacom(game, filename, dbobj):
     boxscore_nbacom.CleanBoxScore(filename,game, dbobj).clean()
 
 
+def func_shotchart_wnbacom(game, filename, dbobj):
+    shotchart_nbacom.CleanWnba(filename,game, dbobj).cleanAll()
+
+
 def go(tuple_games_and_files, dbobj):
 
     for gamedata,files in tuple_games_and_files:
@@ -108,54 +112,6 @@ def go(tuple_games_and_files, dbobj):
             globals()["func_" + f](gamedata,files[f], dbobj)
             logging.info("CLEAN - %s - game_id: %s - : time_elapsed %.2f" % (f, gamedata['id'], time.time() - step_time))
 
-
-
-        """
-        print "  + CBSSports.com shot chart data"
-        step_time = time.time()
-        shotvars = {
-            'filename':  filenames['shotchart_cbssports'],
-            'gamedata':  gamedata,
-            'dbobj'   :  dbobj
-        }
-        shotchart_cbssports.CleanShots(**shotvars).clean()
-        logging.info("CLEAN - shotchart_cbssports - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
-
-        print "  + CBSSports.com boxscore data" 
-        step_time = time.time()
-        boxscore_cbssports.CleanBoxScore(gamedata, dbobj).clean()
-        logging.info("CLEAN - boxscore_cbssports - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
-
-        print "  + NBA.com boxscore data" 
-        step_time = time.time()
-        boxscore_nbacom.CleanBoxScore(filenames['boxscore_nbacom'],gamedata, dbobj).clean()
-        logging.info("CLEAN - boxscore_nbacom - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
-
-        print "  + NBA.com play by play data" 
-        step_time = time.time()
-        pbp_nbacom.Clean(filenames['playbyplay_nbacom'],gamedata, dbobj).clean()
-        logging.info("CLEAN - playbyplay_nbacom - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
-
-        print "  + ESPN play by play data"
-        step_time = time.time()
-        pbpvars = {
-            'filename':  filenames['playbyplay_espn'],
-            'gamedata':  gamedata,
-            'dbobj'   :  dbobj
-        }
-        pbp_espn.Clean(**pbpvars).cleanAll()
-        logging.info("CLEAN - playbyplay_espn - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
-
-        print "  + NBA.com shot chart data"
-        step_time = time.time()
-        shotchart_nbacom.Clean(filenames['shotchart_nbacom'],gamedata, dbobj).cleanAll()
-        logging.info("CLEAN - shotchart_nbacom - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
-
-        print "  + ESPN.com shot chart data"
-        step_time = time.time()
-        shotchart_espn.Clean(filenames['shotchart_espn'],gamedata, dbobj).cleanAll()
-        logging.info("CLEAN - shotchart_espn - game_id: %s - : time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
-        """
 
 
 if __name__ == '__main__':
