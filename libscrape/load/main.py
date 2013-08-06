@@ -78,6 +78,10 @@ class Load:
         self.db.insert_or_update('shotchart_nbacom',newshots)
 
 
+    def load_shotchart_wnbacom(self, f):
+        self.load_shotchart_nbacom(f)
+
+
     def load_boxscore_nbacom(self, f):
         data = json.loads(open(LOGDIR_CLEAN + f,'r').readline())
 
@@ -129,20 +133,6 @@ class Load:
 def go(tuple_games_and_files, dbobj):
     obj = Load(dbobj)
 
-    """
-    funcs = [
-        (obj.loadCbsSportsShotData,'shotchart_cbssports',''),
-        (obj.loadNbaComPlayByPlayData,'playbyplay_nbacom',''),
-        (obj.loadEspnPlayByPlayData,'playbyplay_espn',''),
-        (obj.loadCbsSportsBoxScore,'boxscore_cbssports',''),
-        (obj.loadShotChartNbaCom,'shotchart_nbacom',''),
-        (obj.loadShotChartEspn,'shotchart_espn',''),
-        (obj.loadBoxScoreNbaCom,'boxscore_nbacom',''),
-        (obj.loadBoxScoreNbaComGameStats,'boxscore_nbacom','_game_stats')
-
-    ]
-    """
-
     for gamedata, files in tuple_games_and_files:
         print "+++ LOAD: %s - %s" % (gamedata['id'], gamedata['abbrev'])
         s_time = time.time()
@@ -154,15 +144,6 @@ def go(tuple_games_and_files, dbobj):
 
             if f == 'boxscore_nbacom':
                 getattr(obj,'load_game_stats')(files[f] + '_game_stats')
-
-
-
-        """
-        for func, filename, opt_extension in funcs:
-            step_time = time.time()
-            func(filenames[filename] + opt_extension)
-            print "  Loaded %s: %.2f sec" % (func.__name__, time.time() - step_time)
-        """
 
         logging.info("LOAD - game_id: %s - time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
         

@@ -48,7 +48,7 @@ class Extract:
     def _getData(self):
         self.soup = BeautifulSoup(self.html)
         
-        table = self.soup.find(attrs={'class':'mod-data'})
+        table = self.soup.find(attrs={'class':re.compile('.*mod-data.*')})
         if table:
             rows = table.findAll('tr')
             if rows:
@@ -180,22 +180,21 @@ class Extract:
 
 
 def main():
-    dbobj = db.Db(db.dbconn_nba)
+    dbobj = db.Db(db.dbconn_prod)
     game = dbobj.query_dict("""
         SELECT g.*, home_team.city home_team_city, away_team.city away_team_city 
         FROM game g 
             INNER JOIN team home_team on home_team.id = g.home_team_id
             INNER JOIN team away_team on away_team.id = g.away_team_id
-        WHERE g.id = 2976
+        WHERE g.id = 1
             AND g.should_fetch_data = 1
     """)[0]
     filename = game['abbrev'] + '_playbyplay_espn'
 
     obj = Extract(open(LOGDIR_SOURCE + filename,'r').read(),filename ,game)
     data = obj._getData()
-    ranges = obj._makeBackupPeriodRanges(data)
-    #ranges = obj._getPeriodIndexes(data)
-    print ranges
+    for row in data:
+        print row
 
 
 if __name__ == '__main__':
