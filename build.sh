@@ -19,6 +19,7 @@ then
     mysql --user=$USERNAME --password=$PASSWORD $DATABASE < schema/core_schema.sql
     mysql --user=$USERNAME --password=$PASSWORD $DATABASE < schema/core_data.sql
     mysql --user=$USERNAME --password=$PASSWORD $DATABASE < schema/game_data.sql
+    mysql --user=$USERNAME --password=$PASSWORD $DATABASE < schema/team_data.sql
 else
     echo "-- Please enter 1) username, 2) password, and 3) database name, in that order (sh build.sh username password database_name)"
 fi
