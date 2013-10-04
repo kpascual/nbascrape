@@ -22,7 +22,6 @@ LOGDIR_SOURCE = constants.LOGDIR_SOURCE
 class Clean:
 
     def __init__(self, filename, gamedata, dbobj):
-        self.xml = open(LOGDIR_SOURCE + filename,'r').read()
         self.qry = dbobj
         self.dbobj = dbobj
         self.game = gamedata
@@ -45,7 +44,7 @@ class Clean:
         PLAY_TYPE_NBACOM_JUMPBALL = 18
         PLAY_TYPES_NBACOM_PLAYER2_SAME = [12,14,24,55]
 
-        soup = BeautifulStoneSoup(self.xml)
+        soup = BeautifulStoneSoup(open(LOGDIR_SOURCE + self.filename,'r').read())
         playbyplaydata = soup.findAll("event")
 
         cleaned_plays = []
