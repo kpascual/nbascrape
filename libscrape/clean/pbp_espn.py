@@ -127,6 +127,13 @@ class Clean:
 
     def replaceBlankScores(self, data):
         new = []
+
+        # Check if first play has no scores
+        if data[0]['away_score'] == '':
+            data[0]['away_score'] = 0
+        if data[0]['home_score'] == '':
+            data[0]['home_score'] = 0
+
         for i, line in enumerate(data):
             if line['away_score'] == '':
                 line['away_score'] = data[i-1]['away_score']

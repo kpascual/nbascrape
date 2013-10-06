@@ -37,19 +37,20 @@ cd libscrape/config
 cp constants_example.py constants.py
 ```
 
-* Copy db_example.py to db.py, and enter your MySQL database credentials
+* Copy db_example.py to db.py
 
 ```
 cp db_example.py db.py
 ```
 
+* In config.py, enter your MySQL database credentials
 ```
 vi db.py
 
-  4 dbconn_prod = {
-  5     'user': 'username_here',
-  6     'passwd': 'password_here',
-  7     'db': 'database_name_here'
+  4 dbconn_prod_nba = {
+  5     'user': 'username_for_database',
+  6     'passwd': 'password__for_database',
+  7     'db': 'production_database_name'
   8 }
 ```
 

@@ -35,9 +35,16 @@ URL = {
 LIST_TEAMS = ['MILWAUKEE', 'MINNESOTA', 'MIAMI', 'ATLANTA', 'BOSTON', 'DETROIT', 'DENVER', 'NEW JERSEY', 'NEW ORLEANS', 'DALLAS', 'PORTLAND', 'ORLANDO', 'TORONTO', 'CHICAGO', 'NEW YORK', 'CHARLOTTE', 'UTAH', 'GOLDEN STATE', 'CLEVELAND', 'HOUSTON', 'WASHINGTON', 'LOS ANGELES', 'PHILADELPHIA', 'PHOENIX', 'MEMPHIS', 'LOS ANGELES', 'SACRAMENTO', 'OKLAHOMA CITY', 'INDIANA', 'SAN ANTONIO']
 
 SECONDS = {
-    'game_regulation': 2880,
-    'in_quarter': 720,
-    'in_overtime': 300
+    'nba': {
+        'game_regulation': 2880,
+        'in_quarter': 720,
+        'in_overtime': 300
+    },
+    'wnba': {
+        'game_regulation': 2400,
+        'in_quarter': 600,
+        'in_overtime': 300
+    },
 }
 
 """
