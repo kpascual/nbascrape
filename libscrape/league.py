@@ -1,4 +1,5 @@
-
+from config import db
+from config import config
 
 class League:
 
@@ -18,13 +19,23 @@ class League:
 
 
     def getSeason(self, dt):
-        return self.dbobj.query_dict("""
+        data = self.dbobj.query_dict("""
             SELECT *
             FROM dim_season
-            WHERE start_date >= '%s'
-                AND end_date <= '%s'
-        """ % (dt))
+            WHERE start_date <= '%s'
+                AND end_date >= '%s'
+        """ % (dt, dt))
+        return data[0] if data else {}
 
 
+def main():
+    dbobj = db.Db(config.config['db'])
+    lgobj = League(dbobj)
+    season = lgobj.getSeason('2013-10-20')
+
+
+
+if __name__ == '__main__':
+    main()
 
 
