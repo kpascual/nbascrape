@@ -8,6 +8,7 @@ import logging
 from libscrape.config import constants
 from libscrape.config import db
 from libscrape.config import config
+import league
 import source.main
 import extract.main
 import clean.main
@@ -20,46 +21,49 @@ LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 logging.basicConfig(filename='etl.log',level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def _chooseGames(date_played, dbobj):
-    return dbobj.query_dict("""
-        SELECT g.*, home_team.city home_team_city, away_team.city away_team_city 
-        FROM game g 
-            INNER JOIN team home_team on home_team.id = g.home_team_id
-            INNER JOIN team away_team on away_team.id = g.away_team_id
-        WHERE g.date_played = '%s'
-            AND g.should_fetch_data = 1
-    """ % (date_played))
 
-
-def getAll(dt, files = None):
-    dbobj = db.Db(config.config['db'])
+def scrapeDailyAuto(dt, files = None):
     step_time = time.time()
 
-    config_no_pw = config.config['db']
+    dbobj = db.Db(config.config['db'])
+    config_no_pw = config.config['db'].copy()
     del config_no_pw['passwd']
-    logging.info("MASTER - starting ETL job - date: %s - database: %s" % (dt, config_no_pw))
-    # Default set of files/tables to populate
+    
     if not files:
-        files = ['boxscore_nbacom','boxscore_cbssports','playbyplay_espn','playbyplay_nbacom','shotchart_cbssports','shotchart_espn','shotchart_nbacom']
-
-    # Choose games
-    games = _chooseGames(dt, dbobj)
+        files = [
+            'boxscore_nbacom',
+            'boxscore_cbssports',
+            'playbyplay_espn',
+            'playbyplay_nbacom',
+            'shotchart_cbssports',
+            'shotchart_espn',
+            'shotchart_nbacom'
+        ]
 
     # MAIN ETL PROCESS
-    print "+++ MASTER ETL - files: %s - database: %s" % (str(files), config.config['db'])
+    print "+++ MASTER ETL - files: %s - database: %s" % (str(files), config_no_pw)
+    logging.info("MASTER - starting ETL job - date: %s - database: %s" % (dt, config_no_pw))
 
-    # Get source
-    gamedata = source.main.go(games, files)
-
-    extract.main.go(gamedata)
-    clean.main.go(gamedata, dbobj)
-    load.main.go(gamedata, dbobj)
-
+    scrape(dbobj, dt, files)
 
     tomorrow = dt + datetime.timedelta(days=1)
 
     time_elapsed = "Total time: %.2f sec" % (time.time() - step_time)
     logging.info(time_elapsed)
+
+
+def scrape(dbobj, dt, files):
+    # Choose games
+    lgobj = league.League(dbobj)
+    games = lgobj.getGames(dt)
+
+    # Get source
+    gamedata = source.main.go(games, files)
+
+    # Scrape
+    extract.main.go(gamedata)
+    clean.main.go(gamedata, dbobj)
+    load.main.go(gamedata, dbobj)
 
 
 def main():
@@ -75,7 +79,7 @@ def main():
         dt = datetime.date.today() - datetime.timedelta(days=1)
 
     print dt
-    getAll(dt,files)
+    scrapeDailyAuto(dt, files)
     
 
 if __name__ == '__main__':
