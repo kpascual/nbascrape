@@ -1,8 +1,3 @@
--- MySQL dump 10.13  Distrib 5.6.11, for osx10.7 (x86_64)
---
--- Host: localhost    Database: nba
--- ------------------------------------------------------
--- Server version	5.6.11
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -14,11 +9,6 @@
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-
---
--- Table structure for table `boxscore_nbacom`
---
-
 DROP TABLE IF EXISTS `boxscore_nbacom`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -52,13 +42,8 @@ CREATE TABLE `boxscore_nbacom` (
   UNIQUE KEY `idx_game_player` (`game_id`,`player_id`),
   KEY `idx_game_id` (`game_id`),
   KEY `idx_player_id` (`player_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=98506 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `boxscore_cbssports`
---
-
 DROP TABLE IF EXISTS `boxscore_cbssports`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -77,11 +62,6 @@ CREATE TABLE `boxscore_cbssports` (
   KEY `idx_game_id` (`game_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `shotchart_nbacom`
---
-
 DROP TABLE IF EXISTS `shotchart_nbacom`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -100,13 +80,8 @@ CREATE TABLE `shotchart_nbacom` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_game_play` (`game_id`,`nbacom_play_num`),
   KEY `idx_game_id` (`game_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=629038 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `shotchart_espn`
---
-
 DROP TABLE IF EXISTS `shotchart_espn`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -127,13 +102,8 @@ CREATE TABLE `shotchart_espn` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_game_play` (`game_id`,`espn_play_num`),
   KEY `idx_game_id` (`game_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=628850 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `shotchart_cbssports`
---
-
 DROP TABLE IF EXISTS `shotchart_cbssports`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -153,13 +123,8 @@ CREATE TABLE `shotchart_cbssports` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_game_shot` (`game_id`,`shot_num`),
   KEY `idx_game_id` (`game_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=779165 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `playbyplay_nbacom`
---
-
 DROP TABLE IF EXISTS `playbyplay_nbacom`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -189,13 +154,8 @@ CREATE TABLE `playbyplay_nbacom` (
   KEY `idx_player_id` (`player_id`),
   KEY `idx_team_id` (`team_id`),
   KEY `idx_play_type_nbacom_id` (`play_type_nbacom_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=1612116 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `playbyplay_espn`
---
-
 DROP TABLE IF EXISTS `playbyplay_espn`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -226,13 +186,8 @@ CREATE TABLE `playbyplay_espn` (
   UNIQUE KEY `idx_game_play` (`game_id`,`play_index`),
   KEY `idx_game_id` (`game_id`),
   KEY `idx_player_id` (`player_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=1679641 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `game_stats`
---
-
 DROP TABLE IF EXISTS `game_stats`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -272,11 +227,6 @@ CREATE TABLE `game_stats` (
   PRIMARY KEY (`game_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `player`
---
-
 DROP TABLE IF EXISTS `player`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -301,13 +251,8 @@ CREATE TABLE `player` (
   KEY `idx_nbacom_player_id` (`nbacom_player_id`),
   KEY `idx_cbssports_player_id` (`cbssports_player_id`),
   KEY `idx_nbacom_player_tag` (`nbacom_player_tag`)
-) ENGINE=MyISAM AUTO_INCREMENT=1501 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `player_cbssports`
---
-
 DROP TABLE IF EXISTS `player_cbssports`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -322,11 +267,6 @@ CREATE TABLE `player_cbssports` (
   `updated_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `player_nbacom`
---
-
 DROP TABLE IF EXISTS `player_nbacom`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -341,11 +281,6 @@ CREATE TABLE `player_nbacom` (
   `updated_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `player_cbssports_by_game`
---
-
 DROP TABLE IF EXISTS `player_cbssports_by_game`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -365,11 +300,6 @@ CREATE TABLE `player_cbssports_by_game` (
   KEY `idx_game_id` (`game_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `player_nbacom_by_game`
---
-
 DROP TABLE IF EXISTS `player_nbacom_by_game`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -392,11 +322,6 @@ CREATE TABLE `player_nbacom_by_game` (
   KEY `idx_player_id` (`player_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `player_team_history`
---
-
 DROP TABLE IF EXISTS `player_team_history`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -408,11 +333,6 @@ CREATE TABLE `player_team_history` (
   `end_date` date DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `player_espn`
---
-
 DROP TABLE IF EXISTS `player_espn`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -433,11 +353,6 @@ CREATE TABLE `player_espn` (
   `created_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `game`
---
-
 DROP TABLE IF EXISTS `game`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -460,19 +375,15 @@ CREATE TABLE `game` (
   `permalink` varchar(100) DEFAULT NULL,
   `season_type` varchar(5) DEFAULT NULL,
   `should_fetch_data` tinyint(4) DEFAULT '1',
+  `dim_season_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_abbrev` (`abbrev`),
   UNIQUE KEY `idx_permalink` (`permalink`),
   KEY `idx_away_team_id` (`away_team_id`),
   KEY `idx_home_team_id` (`home_team_id`),
   KEY `idx_date_played` (`date_played`)
-) ENGINE=MyISAM AUTO_INCREMENT=4044 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `team`
---
-
 DROP TABLE IF EXISTS `team`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -501,13 +412,8 @@ CREATE TABLE `team` (
   `season` varchar(10) DEFAULT NULL,
   `season_type` varchar(5) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=421 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `play_espn`
---
-
 DROP TABLE IF EXISTS `play_espn`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -543,11 +449,6 @@ CREATE TABLE `play_espn` (
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `play_type_nbacom`
---
-
 DROP TABLE IF EXISTS `play_type_nbacom`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -577,11 +478,6 @@ CREATE TABLE `play_type_nbacom` (
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `shot_type_cbssports`
---
-
 DROP TABLE IF EXISTS `shot_type_cbssports`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -592,11 +488,6 @@ CREATE TABLE `shot_type_cbssports` (
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `shot_type_nbacom`
---
-
 DROP TABLE IF EXISTS `shot_type_nbacom`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -608,11 +499,6 @@ CREATE TABLE `shot_type_nbacom` (
   PRIMARY KEY (`nbacom_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `version`
---
-
 DROP TABLE IF EXISTS `version`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -621,13 +507,8 @@ CREATE TABLE `version` (
   `updated_at` datetime DEFAULT NULL,
   `filename` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `franchise`
---
-
 DROP TABLE IF EXISTS `franchise`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -643,13 +524,8 @@ CREATE TABLE `franchise` (
   `current_nickname` varchar(30) DEFAULT NULL,
   `is_active` tinyint(4) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=31 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `dim_play_type`
---
-
 DROP TABLE IF EXISTS `dim_play_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -684,11 +560,6 @@ CREATE TABLE `dim_play_type` (
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `player_nbacom_unknown_by_game`
---
-
 DROP TABLE IF EXISTS `player_nbacom_unknown_by_game`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -721,4 +592,3 @@ CREATE TABLE `player_nbacom_unknown_by_game` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2013-09-17  7:08:44
