@@ -28,6 +28,14 @@ class League:
         return data[0] if data else {}
 
 
+    def getTeams(self, season):
+        return self.dbobj.query_dict("""
+            SELECT *
+            FROM team
+            WHERE season = '%s'
+        """ % (season))
+
+
 def main():
     dbobj = db.Db(config.config['db'])
     lgobj = League(dbobj)
