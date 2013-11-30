@@ -1,13 +1,15 @@
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 import urllib2
 import re
 import datetime
 from libscrape.config import db
+from libscrape.config import config
 import time
+import json
 
 
 # A script that scrapes ESPN.com's scoreboard to retrieve ESPN's game_id and store into MySQL db
-dbobj = db.Db(db.dbconn_nba)
+dbobj = db.Db(config.dbconn_prod_nba)
 
 def getScoreboardDoc(dt): 
     url = 'http://espn.go.com/nba/scoreboard?date=%s' % dt.isoformat().replace('-','')
@@ -32,11 +34,16 @@ def getGameIdsAndTeams(html, season):
     for game_id in game_ids:
         
         try:
+            away_team_id = 0
             team_div = soup.findAll(id='%s-aTeamName' % game_id)
-            away_team_id, away_team, away_team_nbacom, away_team_nickname = findTeamName(team_div[0].a.renderContents(), season)
+            if team_div and hasattr(team_div[0], 'a'):
+                away_team_id, away_team, away_team_nbacom, away_team_nickname = findTeamName(team_div[0].a.renderContents(), season)
 
+            home_team_id = 0
             team_div = soup.findAll(id='%s-hTeamName' % game_id)
-            home_team_id, home_team, home_team_nbacom, home_team_nickname = findTeamName(team_div[0].a.renderContents(), season)
+            if team_div and hasattr(team_div[0], 'a'):
+                home_team_id, home_team, home_team_nbacom, home_team_nickname = findTeamName(team_div[0].a.renderContents(), season)
+
 
             game_info.append(
                 {'espn_game_id':game_id, 'away_team': away_team, 
@@ -46,7 +53,7 @@ def getGameIdsAndTeams(html, season):
                 }
             )
         except:
-            print "Could not find teams.  Skipping this game: %s" % (game_id)
+            print "Team not found. Skipping."
 
 
 
@@ -54,15 +61,15 @@ def getGameIdsAndTeams(html, season):
 
 
 def findTeamName(name, season):
-    team_data = _getTeamData(season)
+    teams = _getTeamData(season)
     
-    for team in team_data:
+    for team in teams:
         if name == team['nickname'] or name == team['alternate_nickname']:
             return (team['id'], team['code'],team['nbacom_code'], team['nickname'])
         else:
             pass
 
-    return (0,0) 
+    return (0,'unk','unk','unknown') 
 
 
 def _getTeamData(season):
@@ -133,38 +140,85 @@ def _writeToDatabase(game, date_played):
             curs.execute(sql)
             print sql
 
+def getUrl(url):
+    response = urllib2.urlopen(url)
+    return response.read()
 
 
-def fillInAllDates():
+def statsNbaCom(dt):
+    dt_formatted = dt.strftime("%m/%d/%Y")
+    url = 'http://stats.nba.com/stats/scoreboard/?LeagueID=00&gameDate=%s&DayOffset=0' % (dt_formatted)
+    raw = getUrl(url)
+    games = []
+    
+    data = json.loads(raw)
+    for line in data['resultSets']:
+        print line['name']
+        if line['name'] == 'GameHeader':
+            for row in line['rowSet']:
+                games.append(dict(zip(line['headers'], row)))
 
-    start_dt = datetime.date(2013,6,20)
-    end_dt = datetime.date(2013,6,21)
+    return games
+
+
+def saveStatsNbaCom():
+    dbobj = db.Db(config.dbconn_prod_nba)
+
+    f = open('games.json','r')
+
+    lines = f.readlines()
+    for line in lines:
+        data = json.loads(line.rstrip())
+        if data:
+            for row in data:
+                sql = """
+                    UPDATE game
+                    SET national_tv = '%s',
+                        statsnbacom_game_id = '%s',
+                        gametime = '%s'
+                    WHERE
+                        nbacom_game_id = '%s'
+                """ % (row['NATL_TV_BROADCASTER_ABBREVIATION'], row['GAME_ID'], row['GAME_STATUS_TEXT'], row['GAMECODE'])
+                dbobj.query(sql)
+
+
+
+def backfill():
+
+    start_dt = datetime.date(2014,4,16)
+    end_dt = datetime.date(2014,4,20)
     dt = start_dt
+    f = open('games.json','a')
 
     while dt < end_dt:
 
-        #print dt
-        go(dt)
+        print dt
+        f.write(json.dumps(statsNbaCom(dt)))
+        f.write('\n')
 
         dt = dt + datetime.timedelta(days=1)
+        time.sleep(3)
+
+
+
+def main():
+    dt = datetime.date(2014,1,25)
+    statsNbaCom(dt)
     
 
 
-def go(dt):
-    current_season = '2012-2013'
-    season_type = 'POST'
+def go(dt, season, season_type):
     
     html = getScoreboardDoc(dt)
-    gamedata = getGameIdsAndTeams(html, current_season)
-    complete_gamedata = _fillInGameData(current_season, season_type, gamedata, dt)
+    gamedata = getGameIdsAndTeams(html, season)
+    complete_gamedata = _fillInGameData(season, season_type, gamedata, dt)
 
     for game in complete_gamedata:
         print game
         dbobj.insert_or_update('game',[game])
-        _writeToDatabase(game, dt)
     
 
 
 
 if __name__ == '__main__':
-    fillInAllDates()
+    saveStatsNbaCom()

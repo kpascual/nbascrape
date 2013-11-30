@@ -13,6 +13,8 @@ URL_SHOTCHART_ESPN = 'http://sports.espn.go.com/nba/gamepackage/data/shot?gameId
 URL_PLAYBYPLAY_NBACOM = 'http://www.nba.com/games/game_component/dynamic/<game_id>/pbp_all.xml'
 URL_SHOTCHART_NBACOM = 'http://www.nba.com/games/game_component/dynamic/<game_id>/shotchart_all.xml'
 URL_BOXSCORE_NBACOM = 'http://www.nba.com/games/game_component/dynamic/<game_id>/boxscore.xml'
+URL_PLAYBYPLAY_STATSNBACOM = 'http://stats.nba.com/stats/boxscore?GameID=<game_id>&RangeType=0&StartPeriod=0&EndPeriod=0&StartRange=0&EndRange=0&playbyplay=undefined'
+URL_SHOTCHART_STATSNBACOM = 'http://stats.nba.com/stats/shotchartdetail?Season=&SeasonType=Regular+Season&LeagueID=00&TeamID=0&PlayerID=0&GameID=<game_id>&Outcome=&Location=&Month=0&SeasonSegment=&DateFrom=&DateTo=&OpponentTeamID=0&VsConference=&VsDivision=&Position=&RookieYear=&GameSegment=&Period=0&LastNGames=0&ContextFilter=&ContextMeasure=FG_PCT&zone-mode=basic&viewShots=true'
 
 URL = {
     'nba': {
@@ -21,14 +23,18 @@ URL = {
         'SHOTCHART_ESPN': 'http://sports.espn.go.com/nba/gamepackage/data/shot?gameId=<game_id>',
         'PLAYBYPLAY_NBACOM': 'http://www.nba.com/games/game_component/dynamic/<game_id>/pbp_all.xml',
         'SHOTCHART_NBACOM': 'http://www.nba.com/games/game_component/dynamic/<game_id>/shotchart_all.xml',
-        'BOXSCORE_NBACOM': 'http://www.nba.com/games/game_component/dynamic/<game_id>/boxscore.xml'
+        'BOXSCORE_NBACOM': 'http://www.nba.com/games/game_component/dynamic/<game_id>/boxscore.xml',
+        'PLAYBYPLAY_STATSNBACOM': 'http://stats.nba.com/stats/playbyplay?GameID=<game_id>&RangeType=0&StartPeriod=0&EndPeriod=0&StartRange=0&EndRange=0&playbyplay=undefined',
+        'SHOTCHART_STATSNBACOM': 'http://stats.nba.com/stats/shotchartdetail?Season=&SeasonType=Regular+Season&LeagueID=00&TeamID=0&PlayerID=0&GameID=<game_id>&Outcome=&Location=&Month=0&SeasonSegment=&DateFrom=&DateTo=&OpponentTeamID=0&VsConference=&VsDivision=&Position=&RookieYear=&GameSegment=&Period=0&LastNGames=0&ContextFilter=&ContextMeasure=FG_PCT&zone-mode=basic&viewShots=true',
     },
     'wnba': {
         'PLAYBYPLAY_ESPN': 'http://espn.go.com/wnba/playbyplay?gameId=<game_id>&period=0',
         'SHOTCHART_ESPN': 'http://sports.espn.go.com/wnba/gamepackage/data/shot?gameId=<game_id>',
         'PLAYBYPLAY_NBACOM': 'http://www.wnba.com/games/game_component/dynamic/<game_id>/pbp_all.xml',
         'SHOTCHART_NBACOM': 'http://www.wnba.com/games/game_component/dynamic/<game_id>/shotchart_all.xml',
-        'BOXSCORE_NBACOM': 'http://www.wnba.com/games/game_component/dynamic/<game_id>/boxscore.xml'
+        'BOXSCORE_NBACOM': 'http://www.wnba.com/games/game_component/dynamic/<game_id>/boxscore.xml',
+        'PLAYBYPLAY_STATSNBACOM': '',
+        'SHOTCHART_STATSNBACOM': '',
     }
 }
 

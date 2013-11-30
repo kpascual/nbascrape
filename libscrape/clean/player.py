@@ -113,7 +113,8 @@ class PlayerNbaCom:
                         INNER JOIN team t ON t.nbacom_code = pnba.team
                     SET pnba.team_id = t.id
                     WHERE pnba.game_id = %s
-                """ % (self.gamedata['id']))
+                        AND (t.id = %s OR t.id = %s)
+                """ % (self.gamedata['id'], self.gamedata['home_team_id'], self.gamedata['away_team_id']))
             else:
                 data = {
                     'nbacom_player_id':nbacom_player_id,'game_id':self.gamedata['id'],

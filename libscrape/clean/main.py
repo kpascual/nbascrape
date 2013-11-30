@@ -12,6 +12,8 @@ import shotchart_espn
 import shotchart_nbacom
 import boxscore_cbssports
 import boxscore_nbacom
+import shotchart_statsnbacom
+import playbyplay_statsnbacom
 import player
 
 from libscrape.config import constants
@@ -87,6 +89,14 @@ def func_boxscore_nbacom(game, filename, dbobj):
 
 def func_shotchart_wnbacom(game, filename, dbobj):
     shotchart_nbacom.CleanWnba(filename,game, dbobj).cleanAll()
+
+
+def func_shotchart_statsnbacom(game, filename, dbobj):
+    shotchart_statsnbacom.Clean(filename, game, dbobj).clean()
+
+
+def func_playbyplay_statsnbacom(game, filename, dbobj):
+    playbyplay_statsnbacom.Clean(filename, game, dbobj).clean()
 
 
 def go(tuple_games_and_files, dbobj):
