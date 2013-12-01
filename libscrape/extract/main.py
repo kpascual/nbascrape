@@ -74,6 +74,14 @@ def func_shotchart_wnbacom(game, filename):
     all_nbacom.copyFile(filename)
 
 
+def func_shotchart_statsnbacom(game, filename):
+    all_nbacom.copyFile(filename)
+
+
+def func_playbyplay_statsnbacom(game, filename):
+    all_nbacom.copyFile(filename)
+
+
 def go(sourcedocs):
 
     for gamedata, files in sourcedocs:

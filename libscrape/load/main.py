@@ -125,6 +125,18 @@ class Load:
         self.db.insert_or_update('shotchart_espn',newshots)
 
 
+    def load_shotchart_statsnbacom(self, f):
+
+        data = json.loads(open(constants.LOGDIR_CLEAN + f, 'r').read())
+        self.db.insert_or_update('shotchart_statsnbacom',data)
+
+
+    def load_playbyplay_statsnbacom(self, f):
+
+        data = json.loads(open(constants.LOGDIR_CLEAN + f, 'r').read())
+        self.db.insert_or_update('playbyplay_statsnbacom',data)
+
+
     def load_game_stats(self, f):
         stats = json.loads(open(LOGDIR_CLEAN + f,'r').readline())
         self.db.insert_or_update('game_stats',[stats])
@@ -145,7 +157,7 @@ def go(tuple_games_and_files, dbobj):
             if f == 'boxscore_nbacom':
                 getattr(obj,'load_game_stats')(files[f] + '_game_stats')
 
-        logging.info("LOAD - game_id: %s - time_elapsed %.2f" % (gamedata['id'], time.time() - step_time))
+        logging.info("LOAD - game_id: %s - time_elapsed %.2f" % (gamedata['id'], time.time() - s_time))
         
 
 def test():
