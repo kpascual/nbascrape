@@ -62,13 +62,13 @@ class CleanBoxScore:
         data['home_game_start'] = dict_gamedata['timh']
         data['away_game_start'] = dict_gamedata['timv']
         data['unknown_game_start'] = dict_gamedata['timet']
-        data['national'] = dict_gamedata['nbrd']
+        data['national'] = dict_gamedata['nbrd'].replace('\'','').replace('\"','')
 
         home_data = self.soup.find("htm")
         dict_home = dict(home_data.attrs)
 
-        data['home_tv'] = dict_home['brd'].split('|')[0]
-        data['home_radio'] = dict_home['brd'].split('|')[1]
+        data['home_tv'] = dict_home['brd'].split('|')[0].replace('\'','').replace('\"','')
+        data['home_radio'] = dict_home['brd'].split('|')[1].replace('\'','').replace('\"','')
         data['home_quarter_score'] = dict_home['scr']
         data['home_score'] = data['home_quarter_score'].split('|')[-1]
         data['home_record'] = dict_home['rcd'].replace('/','-')
@@ -78,8 +78,8 @@ class CleanBoxScore:
         away_data = self.soup.find("vtm")
         dict_away = dict(away_data.attrs)
 
-        data['away_tv'] = dict_away['brd'].split('|')[0]
-        data['away_radio'] = dict_away['brd'].split('|')[1]
+        data['away_tv'] = dict_away['brd'].split('|')[0].replace('\'','').replace('\"','')
+        data['away_radio'] = dict_away['brd'].split('|')[1].replace('\'','').replace('\"','')
         data['away_quarter_score'] = dict_away['scr']
         data['away_score'] = data['away_quarter_score'].split('|')[-1]
         data['away_record'] = dict_away['rcd'].replace('/','-')
