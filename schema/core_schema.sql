@@ -234,6 +234,7 @@ CREATE TABLE `player` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `old_id` int(11) DEFAULT NULL,
   `nbacom_player_id` varchar(20) DEFAULT NULL,
+  `statsnbacom_player_id` int(11) DEFAULT NULL,
   `cbssports_player_id` int(11) DEFAULT NULL,
   `nbacom_player_tag` varchar(50) DEFAULT NULL,
   `full_name` varchar(100) DEFAULT NULL,
@@ -399,6 +400,7 @@ CREATE TABLE `team` (
   `alternate_nickname` varchar(30) NOT NULL,
   `nbacom_code` char(3) DEFAULT NULL,
   `cbssports_code` varchar(3) DEFAULT NULL,
+  `statsnbacom_team_id` int(11) DEFAULT NULL,
   `color1` varchar(7) DEFAULT NULL,
   `color2` varchar(7) DEFAULT NULL,
   `unique_name` varchar(40) DEFAULT NULL,
@@ -629,7 +631,8 @@ CREATE TABLE `playbyplay_statsnbacom` (
   `eventmsgtype` int(11) DEFAULT NULL,
   `wctimestring` varchar(64) DEFAULT NULL,
   `pctimestring` varchar(64) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_game_event` (`game_id`,`game_event_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `play_type_statsnbacom`;
@@ -642,6 +645,125 @@ CREATE TABLE `play_type_statsnbacom` (
   `is_shot` tinyint(4) DEFAULT NULL,
   `is_shot_made` tinyint(4) DEFAULT NULL,
   PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `boxscore_statsnbacom`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `boxscore_statsnbacom` (
+  `game_id` int(11) NOT NULL DEFAULT '0',
+  `player_id` int(11) NOT NULL DEFAULT '0',
+  `team_id` int(11) DEFAULT NULL,
+  `deciseconds_played` int(11) DEFAULT NULL,
+  `points` int(11) DEFAULT NULL,
+  `rebounds` int(11) DEFAULT NULL,
+  `assists` int(11) DEFAULT NULL,
+  `steals` int(11) DEFAULT NULL,
+  `blocks` int(11) DEFAULT NULL,
+  `fouls` int(11) DEFAULT NULL,
+  `turnovers` int(11) DEFAULT NULL,
+  `rebounds_defensive` int(11) DEFAULT NULL,
+  `rebounds_offensive` int(11) DEFAULT NULL,
+  `fgm` int(11) DEFAULT NULL,
+  `fga` int(11) DEFAULT NULL,
+  `ftm` int(11) DEFAULT NULL,
+  `fta` int(11) DEFAULT NULL,
+  `threeptm` int(11) DEFAULT NULL,
+  `threepta` int(11) DEFAULT NULL,
+  `ft` decimal(6,3) DEFAULT NULL,
+  `fg` decimal(6,3) DEFAULT NULL,
+  `threeptfg` decimal(6,3) DEFAULT NULL,
+  `plus_minus` int(11) DEFAULT NULL,
+  `comment` varchar(100) DEFAULT NULL,
+  `start_position` varchar(20) DEFAULT NULL,
+  `statsnbacom_player_id` int(11) NOT NULL DEFAULT '0',
+  `statsnbacom_player_name` varchar(100) DEFAULT NULL,
+  `statsnbacom_game_id` int(11) DEFAULT NULL,
+  `statsnbacom_team_id` int(11) DEFAULT NULL,
+  `statsnbacom_team_abbreviation` varchar(50) DEFAULT NULL,
+  `statsnbacom_team_city` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`game_id`,`player_id`,`statsnbacom_player_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `game_stats_statsnbacom`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `game_stats_statsnbacom` (
+  `game_id` int(11) NOT NULL,
+  `attendance` int(11) DEFAULT NULL,
+  `duration` varchar(20) DEFAULT NULL,
+  `official1_id` int(11) DEFAULT NULL,
+  `official2_id` int(11) DEFAULT NULL,
+  `official3_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`game_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `game_stats_team_statsnbacom`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `game_stats_team_statsnbacom` (
+  `game_id` int(11) NOT NULL DEFAULT '0',
+  `team_id` int(11) NOT NULL DEFAULT '0',
+  `deciseconds_elapsed` int(11) DEFAULT NULL,
+  `points` int(11) DEFAULT NULL,
+  `rebounds` int(11) DEFAULT NULL,
+  `assists` int(11) DEFAULT NULL,
+  `steals` int(11) DEFAULT NULL,
+  `blocks` int(11) DEFAULT NULL,
+  `fouls` int(11) DEFAULT NULL,
+  `turnovers` int(11) DEFAULT NULL,
+  `rebounds_defensive` int(11) DEFAULT NULL,
+  `rebounds_offensive` int(11) DEFAULT NULL,
+  `fgm` int(11) DEFAULT NULL,
+  `fga` int(11) DEFAULT NULL,
+  `ftm` int(11) DEFAULT NULL,
+  `fta` int(11) DEFAULT NULL,
+  `threeptm` int(11) DEFAULT NULL,
+  `threepta` int(11) DEFAULT NULL,
+  `ft` decimal(6,3) DEFAULT NULL,
+  `fg` decimal(6,3) DEFAULT NULL,
+  `threeptfg` decimal(6,3) DEFAULT NULL,
+  `plus_minus` int(11) DEFAULT NULL,
+  `lead_changes` int(11) DEFAULT NULL,
+  `points_second_chance` int(11) DEFAULT NULL,
+  `points_in_paint` int(11) DEFAULT NULL,
+  `points_fb` int(11) DEFAULT NULL,
+  `times_tied` int(11) DEFAULT NULL,
+  `largest_lead` int(11) DEFAULT NULL,
+  `pts_qtr1` int(11) DEFAULT NULL,
+  `pts_qtr2` int(11) DEFAULT NULL,
+  `pts_qtr3` int(11) DEFAULT NULL,
+  `pts_qtr4` int(11) DEFAULT NULL,
+  `pts_ot1` int(11) DEFAULT NULL,
+  `pts_ot2` int(11) DEFAULT NULL,
+  `pts_ot3` int(11) DEFAULT NULL,
+  `pts_ot4` int(11) DEFAULT NULL,
+  `pts_ot5` int(11) DEFAULT NULL,
+  `pts_ot6` int(11) DEFAULT NULL,
+  `pts_ot7` int(11) DEFAULT NULL,
+  `pts_ot8` int(11) DEFAULT NULL,
+  `pts_ot9` int(11) DEFAULT NULL,
+  `pts_ot10` int(11) DEFAULT NULL,
+  `team_wins_losses` varchar(20) DEFAULT NULL,
+  `game_sequence` int(11) DEFAULT NULL,
+  `statsnbacom_game_id` int(11) DEFAULT NULL,
+  `statsnbacom_team_id` int(11) DEFAULT NULL,
+  `statsnbacom_team_abbreviation` varchar(50) DEFAULT NULL,
+  `statsnbacom_team_city` varchar(50) DEFAULT NULL,
+  `statsnbacom_team_name` varchar(50) DEFAULT NULL,
+  `statsnbacom_season_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`game_id`,`team_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `player_statsnbacom`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `player_statsnbacom` (
+  `statsnbacom_player_id` int(11) NOT NULL DEFAULT '0',
+  `game_id` int(11) NOT NULL DEFAULT '0',
+  `statsnbacom_team_id` int(11) DEFAULT NULL,
+  `statsnbacom_player_name` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`statsnbacom_player_id`,`game_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

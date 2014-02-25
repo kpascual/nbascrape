@@ -142,6 +142,21 @@ class Load:
         self.db.insert_or_update('game_stats',[stats])
 
 
+    def load_boxscore_statsnbacom(self, f):
+        stats = json.loads(open(LOGDIR_CLEAN + f,'r').readline())
+        self.db.insert_or_update('boxscore_statsnbacom',stats)
+
+
+    def load_game_stats_team_statsnbacom(self, f):
+        stats = json.loads(open(LOGDIR_CLEAN + f,'r').readline())
+        self.db.insert_or_update('game_stats_team_statsnbacom',stats)
+
+
+    def load_game_stats_statsnbacom(self, f):
+        stats = json.loads(open(LOGDIR_CLEAN + f,'r').readline())
+        self.db.insert_or_update('game_stats_statsnbacom',stats)
+
+
 def go(tuple_games_and_files, dbobj):
     obj = Load(dbobj)
 
@@ -156,6 +171,9 @@ def go(tuple_games_and_files, dbobj):
 
             if f == 'boxscore_nbacom':
                 getattr(obj,'load_game_stats')(files[f] + '_game_stats')
+            elif f == 'boxscore_statsnbacom':
+                getattr(obj,'load_game_stats_statsnbacom')(files[f] + '_game_stats')
+                getattr(obj,'load_game_stats_team_statsnbacom')(files[f] + '_game_stats_team')
 
         logging.info("LOAD - game_id: %s - time_elapsed %.2f" % (gamedata['id'], time.time() - s_time))
         

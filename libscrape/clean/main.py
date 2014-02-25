@@ -14,6 +14,7 @@ import boxscore_cbssports
 import boxscore_nbacom
 import shotchart_statsnbacom
 import playbyplay_statsnbacom
+import boxscore_statsnbacom
 import player
 
 from libscrape.config import constants
@@ -99,6 +100,10 @@ def func_playbyplay_statsnbacom(game, filename, dbobj):
     playbyplay_statsnbacom.Clean(filename, game, dbobj).clean()
 
 
+def func_boxscore_statsnbacom(game, filename, dbobj):
+    boxscore_statsnbacom.Clean(filename, game, dbobj).clean()
+
+
 def go(tuple_games_and_files, dbobj):
 
     for gamedata,files in tuple_games_and_files:
@@ -115,6 +120,13 @@ def go(tuple_games_and_files, dbobj):
             obj.resolveNewPlayers()
             player.updatePlayerFullName(dbobj)
 
+        if 'boxscore_statsnbacom' in files:
+            obj = player.PlayerStatsNbaCom(LOGDIR_EXTRACT + files['boxscore_statsnbacom'], gamedata, dbobj)
+            obj.resolveNewPlayers()
+
+            # Resolve with master player list
+            obj = player.Resolve(dbobj)
+            obj.resolveStatsNbacom()
 
         for f in files.keys():
             print "  + %s" % (f)

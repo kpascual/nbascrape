@@ -82,6 +82,10 @@ def func_playbyplay_statsnbacom(game, filename):
     all_nbacom.copyFile(filename)
 
 
+def func_boxscore_statsnbacom(game, filename):
+    all_nbacom.copyFile(filename)
+
+
 def go(sourcedocs):
 
     for gamedata, files in sourcedocs:
