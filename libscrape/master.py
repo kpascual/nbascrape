@@ -39,7 +39,8 @@ def scrapeDailyAuto(dt, files = None):
             'shotchart_espn',
             'shotchart_nbacom',
             'playbyplay_statsnbacom',
-            'shotchart_statsnbacom'
+            'shotchart_statsnbacom',
+            'boxscore_statsnbacom'
         ]
 
     # MAIN ETL PROCESS
