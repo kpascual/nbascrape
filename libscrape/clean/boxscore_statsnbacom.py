@@ -223,7 +223,7 @@ class Clean:
         player_id = self.PlayerResolve.matchByStatsNbaComId(newdata['statsnbacom_player_id'])
         if not player_id:
             player_id = -1
-            logging.info("BOXSCORE_STATSNBACOM - game_id: %s - Did not find match by statsnbacom_player_id: %s" % (self.gamedata['id'], newdata['statsnbacom_player_id']))
+            logging.info("BOXSCORE_STATSNBACOM - game_id: %s - Did not find match by statsnbacom_player_id: %s" % (self.game['id'], newdata['statsnbacom_player_id']))
             # Need a resolve by player name here
 
         newdata['player_id'] = player_id
