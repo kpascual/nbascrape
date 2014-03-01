@@ -187,7 +187,6 @@ class Clean:
         for i,pattern in patterns:
             match = re.match(pattern, play)
             if match:
-                
                 values = match.groupdict()
                 values['play_type_nbacom_id'] = i
 

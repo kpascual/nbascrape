@@ -70,6 +70,10 @@ def func_shotchart_statsnbacom(game, league):
     return getSourceDoc(constants.URL[league]['SHOTCHART_STATSNBACOM'].replace('<game_id>',str(game['statsnbacom_game_id']))) 
 
 
+def func_boxscore_statsnbacom(game, league):
+    return getSourceDoc(constants.URL[league]['BOXSCORE_STATSNBACOM'].replace('<game_id>',str(game['statsnbacom_game_id']))) 
+
+
 def getAndSaveFiles(game, files, league='nba'):
 
     print "+++ SOURCE: %s - %s" % (game['id'], game['abbrev'])

@@ -26,6 +26,7 @@ URL = {
         'BOXSCORE_NBACOM': 'http://www.nba.com/games/game_component/dynamic/<game_id>/boxscore.xml',
         'PLAYBYPLAY_STATSNBACOM': 'http://stats.nba.com/stats/playbyplay?GameID=<game_id>&RangeType=0&StartPeriod=0&EndPeriod=0&StartRange=0&EndRange=0&playbyplay=undefined',
         'SHOTCHART_STATSNBACOM': 'http://stats.nba.com/stats/shotchartdetail?Season=&SeasonType=Regular+Season&LeagueID=00&TeamID=0&PlayerID=0&GameID=<game_id>&Outcome=&Location=&Month=0&SeasonSegment=&DateFrom=&DateTo=&OpponentTeamID=0&VsConference=&VsDivision=&Position=&RookieYear=&GameSegment=&Period=0&LastNGames=0&ContextFilter=&ContextMeasure=FG_PCT&zone-mode=basic&viewShots=true',
+        'BOXSCORE_STATSNBACOM':'http://stats.nba.com/stats/boxscore?GameID=<game_id>&StartPeriod=0&EndPeriod=12&StartRange=0&EndRange=20000000&RangeType=0'
     },
     'wnba': {
         'PLAYBYPLAY_ESPN': 'http://espn.go.com/wnba/playbyplay?gameId=<game_id>&period=0',

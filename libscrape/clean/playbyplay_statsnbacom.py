@@ -97,11 +97,11 @@ class Clean:
         data = []
         for play in plays:
             if play['homedescription']:
-                play['description'] = play['homedescription']
+                play['description'] = play['homedescription'].strip()
             elif play['visitordescription']:
-                play['description'] = play['visitordescription']
+                play['description'] = play['visitordescription'].strip()
             else:
-                play['description'] = play['neutraldescription']
+                play['description'] = play['neutraldescription'].strip()
 
             data.append(play)
 

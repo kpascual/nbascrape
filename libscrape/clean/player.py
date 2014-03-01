@@ -1,11 +1,15 @@
 from BeautifulSoup import BeautifulStoneSoup
 import csv
+import json
 import os
 import logging
 import datetime
 import difflib
+
+from libscrape.config import config
 from libscrape.config import db
 from libscrape.config import constants 
+import utils
 
 
 #logging.basicConfig(format='%(asctime)s %(message)s',filename='player.log',level=logging.DEBUG)
@@ -176,6 +180,38 @@ class PlayerNbaCom:
             logging.info("""PLAYER - game_id: %s - Added new player team history for player_id %s; date: %s; team: %s""" % (self.gamedata['id'], player_id, self.date_played, team_id))
 
 
+class PlayerStatsNbaCom:
+    def __init__(self, filename, gamedata, dbobj):
+        self.raw_data = open(filename,'r').read()
+        self.dbobj = dbobj
+        self.game = gamedata
+        self.filename = filename
+
+    
+    def resolveNewPlayers(self):
+        data = json.loads(self.raw_data)
+
+        for line in data['resultSets']:
+            if line['name'] in ['PlayerStats']:
+                print line['name']
+                header = line['headers']
+                for row in line['rowSet']:
+                    newdata = dict(zip([a.lower() for a in header], row))
+                    insert_data = {
+                        'statsnbacom_player_id': newdata['player_id'], 
+                        'statsnbacom_player_name': newdata['player_name'], 
+                        'statsnbacom_team_id': newdata['team_id'], 
+                        'game_id': self.game['id']
+                    }
+                    # Log data into the database, for double-checking purposes
+                    self.dbobj.insert_or_update('player_statsnbacom', [insert_data])
+
+                    # Check if player_id exists and the player names match.  Log error message if that's not the case
+                    #player_exists = self.dbobj.query("SELECT * FROM player WHERE statsnbacom_player_id = %s" % (newdata['player_id']))
+
+
+
+
 class PlayerCbsSports: 
     def __init__(self, filename, gamedata, dbobj):
         reader = csv.reader(open(filename,'r'),delimiter=',',lineterminator='\n')
@@ -258,25 +294,92 @@ class PlayerCbsSports:
             # Else, check by first name/last name, game_id
 
 
-class ResolvePlayer:
-    def __init__(self, dt):
-        self.dt = dt
+class Resolve:
+    def __init__(self, dbobj):
+        self.dbobj = dbobj
+        self.utils = utils.Utils(self.dbobj)
 
 
-    def addNbaComPlayers(self):
-        pass
+    # Make statsnbacom the "primary key" in the resolved player table
+    def add(self):
+        new_players = self.dbobj.query_dict("""
+            SELECT DISTINCT
+                ps.statsnbacom_player_id
+            FROM
+                player_statsnbacom ps
+                LEFT JOIN player p ON p.statsnbacom_player_id = ps.statsnbacom_player_id
+            WHERE
+                p.id IS NULL
+        """)
+        print new_players
 
-    def resolveCbsSportsPlayers(self):
-        result = self.db.query("""
-            SELECT nbacom_player_id, last_name, first_name, jersey_number, date_found
-            FROM player_nbacom WHERE date_found = '%s'
-        """ % (self.dt))
 
-        for player_data in result:
-            matched_players = self.db.query("""
-                SELECT nbacom_player_id
-                FROMa
-            """)
+    def resolveNbacom(self):
+        new_players = self.dbobj.query_dict("""
+            SELECT DISTINCT
+                pn.nbacom_player_id
+            FROM
+                player_nbacom pn
+                LEFT JOIN player p ON p.nbacom_player_id = pn.nbacom_player_id
+            WHERE
+                p.id IS NULL
+        """)
+        all_players = [line for line in self.utils.getAllPlayers() if line['nbacom_player_id'] is None and line['id'] > 0]
+        print all_players
+
+
+    def resolveStatsNbacom(self):
+        new_players = self.dbobj.query_dict("""
+            SELECT DISTINCT
+                pn.statsnbacom_player_id, 
+                pn.statsnbacom_player_name
+            FROM
+                player_statsnbacom pn
+                LEFT JOIN player p ON p.statsnbacom_player_id = pn.statsnbacom_player_id
+            WHERE
+                p.id IS NULL
+        """)
+        all_players = [(line['id'], line['name']) for line in self.utils.getAllPlayers() if line['statsnbacom_player_id'] is None and line['id'] > 0]
+
+        for line in new_players:
+            matched_player_id = self.matchByNameApproximate(line['statsnbacom_player_name'], all_players)
+            
+            if matched_player_id > 0:
+                self.dbobj.insert_or_update('player', [{'id': matched_player_id, 'statsnbacom_player_id': line['statsnbacom_player_id']}])
+
+
+    def matchByNameApproximate(self, player_name, player_list):
+        player_id = 0
+
+        player_names = [name.lower() for id, name in player_list]
+        player_ids = [id for id, name in player_list]
+
+        match = difflib.get_close_matches(player_name.lower(),player_names,1, 0.8)
+        if match:
+            player_id = player_ids[player_names.index(match[0])]
+            name = match[0]
+
+            if len(match) > 1:
+                logging.warning("CLEAN - resolve player - game_id: ? - multiple matching players found: %s" % (str(match)))
+        else:
+            logging.warning("CLEAN - resolve player - game_id: ? - cant match player name to resolved player: '%s'" % (player_name))
+
+        return player_id
+
+
+    def matchByStatsNbaComId(self, statsnbacom_player_id):
+        player_id = 0
+        match = self.dbobj.query_dict("SELECT * FROM player WHERE statsnbacom_player_id = %s" % (statsnbacom_player_id))
+
+        if match:
+            return match[0]['id']
+
+        return player_id
+
+
+    def getPlayers(self):
+        print self.utils.getAllPlayers()
+
 
 
 def populateOldPlayers():
@@ -306,20 +409,15 @@ def updatePlayerFullName(dbobj):
 
 
 def main():
+    dbobj = db.Db(config.dbconn_prod_nba)
 
-    #files = [f for f in os.listdir(LOGDIR_EXTRACT) if '2011-12' in f and 'boxscore' in f]
-    f = '2011-12-26_PHI@POR_shotchart_cbssports_players'
-    f2 = '2011-12-26_PHI@POR_boxscore_nbacom'
+    gamedata = dbobj.query_dict("SELECT * FROM game WHERE id = 4766")[0]
+    filename = '%s_boxscore_statsnbacom' % (gamedata['abbrev'])
 
-    gamedata = self.nba_query_dict("SELECT * FROM game WHERE id = 1279")[0]
-    dt = datetime.date(2011, 12, 20)
-    #obj = ResolvePlayer(dt)
-    #obj.addNbaComPlayers()
-
-    obj = PlayerNbaCom(LOGDIR_EXTRACT + f2, gamedata)
-    obj.resolveNewPlayers()
-    obj = PlayerCbsSports(LOGDIR_EXTRACT + f, gamedata)
-    obj.resolveNewPlayers()
+    #obj = PlayerStatsNbaCom(filename, gamedata, dbobj)
+    #obj.resolveNewPlayers()
+    obj = Resolve(dbobj)
+    obj.resolveStatsNbacom()
 
 
 if __name__ == '__main__':
