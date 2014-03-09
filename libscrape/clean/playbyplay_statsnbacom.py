@@ -4,6 +4,7 @@ import time
 import json
 import find_player
 import logging
+import player
 
 from libscrape.config import config
 from libscrape.config import db
@@ -23,6 +24,9 @@ class Clean:
         self.game = gamedata
         self.filename = filename
 
+        self.home_players = self._getPlayersInGame(self.game['home_team_id'])
+        self.away_players = self._getPlayersInGame(self.game['away_team_id'])
+
 
     def clean(self):
         plays = self._parse()
@@ -34,8 +38,7 @@ class Clean:
         plays = self._resolvePlays(plays)
         plays = self._addGameId(plays)
         plays = self._deleteFields(plays)
-        #for play in plays:
-        #    print play
+
         self._dumpFile(plays)
 
 
@@ -130,17 +133,41 @@ class Clean:
     def _resolvePlays(self, plays):
         data = []
         patterns = self.dbobj.query_dict("SELECT id, re FROM play_type_statsnbacom ORDER BY priority ASC")
+        resolveobj = player.Resolve(self.dbobj)
+
+
         for play in plays:
             play['play_type_statsnbacom_id'] = 0
             
             for pattern in patterns:
                 match = re.match(pattern['re'], play['description'])
                 if match:
+                    matched_attributes = match.groupdict()
+                    if 'player_id' in matched_attributes.keys():
+                        player_id = 0
+                        # Try last name first, then full name second
+                        if play['team_id'] == self.game['home_team_id']:
+                            player_list_last_name = [(line['id'], line['last_name']) for line in self.home_players]
+                            player_list_full_name = [(line['id'], line['full_name']) for line in self.home_players]
+                        elif play['team_id'] == self.game['away_team_id']: 
+                            player_list_last_name = [(line['id'], line['last_name']) for line in self.away_players]
+                            player_list_full_name = [(line['id'], line['full_name']) for line in self.away_players]
+
+                        player_match = resolveobj.matchByNameApproximate(matched_attributes['player_id'], player_list_last_name)
+                        if player_match:
+                            player_id = player_match
+                        else:
+                            player_match = resolveobj.matchByNameApproximate(matched_attributes['player_id'], player_list_full_name)
+                            if player_match:
+                                player_id = player_match
+
+                        play['player_id'] = player_id
+
+
                     play['play_type_statsnbacom_id'] = pattern['id']
+                    #print (play['play_type_statsnbacom_id'], play['description'], match.groupdict())
                     break
 
-            #if play['play_type_statsnbacom_id'] == 0:
-            #    print play['description']
             data.append(play)
 
         return data
@@ -157,6 +184,15 @@ class Clean:
         return data
 
 
+    def _getPlayersInGame(self, team_id):
+        return self.dbobj.query_dict("""
+            SELECT p.id, p.full_name, p.last_name
+            FROM player_statsnbacom ps
+                INNER JOIN player p ON p.id = ps.player_id
+            WHERE ps.game_id = %s AND ps.team_id = %s
+        """ % (self.game['id'], team_id))
+
+
     def _dumpFile(self, plays):
         f = open(LOGDIR_CLEAN + self.filename,'w')
         play_json = json.dumps(plays)
@@ -167,7 +203,7 @@ def main():
 
     dbobj = db.Db(config.dbconn_prod_nba)
 
-    game = dbobj.query_dict("SELECT * FROM game WHERE id = %s" % (4356))[0]
+    game = dbobj.query_dict("SELECT * FROM game WHERE id = %s" % (4371))[0]
     filename = '%s_playbyplay_statsnbacom' % (game['abbrev'])
     obj = Clean(filename, game, dbobj)
     obj.clean()

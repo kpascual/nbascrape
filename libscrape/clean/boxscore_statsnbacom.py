@@ -37,7 +37,6 @@ class Clean:
         data = []
         for line in raw['resultSets']:
             if line['name'] in ['PlayerStats']:
-                print line['name']
                 header = line['headers']
                 for row in line['rowSet']:
                     newdata = dict(zip([a.lower() for a in header], row))
@@ -100,7 +99,6 @@ class Clean:
     def parseOfficials(self, data):
         for line in data['resultSets']:
             if line['name'] == 'Officials':
-                print line['name']
                 header = line['headers']
                 for row in line['rowSet']:
                     print dict(zip([a.lower() for a in header], row))

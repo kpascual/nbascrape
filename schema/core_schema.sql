@@ -622,6 +622,7 @@ CREATE TABLE `playbyplay_statsnbacom` (
   `team_id` int(11) DEFAULT NULL,
   `away_score` int(11) DEFAULT NULL,
   `home_score` int(11) DEFAULT NULL,
+  `player_id` int(11) DEFAULT NULL,
   `play_type_statsnbacom_id` int(11) DEFAULT NULL,
   `description` varchar(255) DEFAULT NULL,
   `homedescription` varchar(255) DEFAULT NULL,
@@ -632,7 +633,8 @@ CREATE TABLE `playbyplay_statsnbacom` (
   `wctimestring` varchar(64) DEFAULT NULL,
   `pctimestring` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_game_event` (`game_id`,`game_event_id`)
+  UNIQUE KEY `idx_game_event` (`game_id`,`game_event_id`),
+  KEY `idx_player_id` (`player_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `play_type_statsnbacom`;
@@ -763,6 +765,8 @@ CREATE TABLE `player_statsnbacom` (
   `game_id` int(11) NOT NULL DEFAULT '0',
   `statsnbacom_team_id` int(11) DEFAULT NULL,
   `statsnbacom_player_name` varchar(100) DEFAULT NULL,
+  `player_id` int(11) DEFAULT NULL,
+  `team_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`statsnbacom_player_id`,`game_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;

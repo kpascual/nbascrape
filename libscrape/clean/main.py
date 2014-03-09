@@ -127,6 +127,7 @@ def go(tuple_games_and_files, dbobj):
             # Resolve with master player list
             obj = player.Resolve(dbobj)
             obj.resolveStatsNbacom()
+            obj.resolveStatsNbacomByGame(gamedata['id'])
 
         for f in files.keys():
             print "  + %s" % (f)
