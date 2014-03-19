@@ -193,23 +193,28 @@ class PlayerStatsNbaCom:
 
         for line in data['resultSets']:
             if line['name'] in ['PlayerStats']:
-                print line['name']
                 header = line['headers']
                 for row in line['rowSet']:
                     newdata = dict(zip([a.lower() for a in header], row))
+                    team_id = self._matchTeam(newdata['team_id'])
                     insert_data = {
                         'statsnbacom_player_id': newdata['player_id'], 
                         'statsnbacom_player_name': newdata['player_name'], 
                         'statsnbacom_team_id': newdata['team_id'], 
-                        'game_id': self.game['id']
+                        'game_id': self.game['id'],
+                        'team_id': team_id
                     }
                     # Log data into the database, for double-checking purposes
                     self.dbobj.insert_or_update('player_statsnbacom', [insert_data])
 
-                    # Check if player_id exists and the player names match.  Log error message if that's not the case
-                    #player_exists = self.dbobj.query("SELECT * FROM player WHERE statsnbacom_player_id = %s" % (newdata['player_id']))
 
+    def _matchTeam(self, statsnbacom_team_id):
+        team_id = 0
+        query = self.dbobj.query_dict("SELECT id FROM team WHERE statsnbacom_team_id = '%s'" % (statsnbacom_team_id))
+        if query:
+            team_id = query[0]['id']
 
+        return team_id
 
 
 class PlayerCbsSports: 
@@ -346,6 +351,22 @@ class Resolve:
             
             if matched_player_id > 0:
                 self.dbobj.insert_or_update('player', [{'id': matched_player_id, 'statsnbacom_player_id': line['statsnbacom_player_id']}])
+
+
+    def resolveStatsNbacomByGame(self, game_id):
+        data = self.dbobj.query_dict("""
+            SELECT DISTINCT
+                pn.statsnbacom_player_id, pn.game_id, p.id as player_id
+            FROM
+                player_statsnbacom pn
+                INNER JOIN player p ON p.statsnbacom_player_id = pn.statsnbacom_player_id
+            WHERE
+                pn.player_id IS NULL
+                AND pn.game_id = %s
+        """ % (game_id))
+
+        if data:
+            self.dbobj.insert_or_update('player_statsnbacom', data)
 
 
     def matchByNameApproximate(self, player_name, player_list):

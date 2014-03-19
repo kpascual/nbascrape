@@ -622,6 +622,9 @@ CREATE TABLE `playbyplay_statsnbacom` (
   `team_id` int(11) DEFAULT NULL,
   `away_score` int(11) DEFAULT NULL,
   `home_score` int(11) DEFAULT NULL,
+  `player_id` int(11) DEFAULT NULL,
+  `player1_id` int(11) DEFAULT NULL,
+  `player2_id` int(11) DEFAULT NULL,
   `play_type_statsnbacom_id` int(11) DEFAULT NULL,
   `description` varchar(255) DEFAULT NULL,
   `homedescription` varchar(255) DEFAULT NULL,
@@ -632,7 +635,8 @@ CREATE TABLE `playbyplay_statsnbacom` (
   `wctimestring` varchar(64) DEFAULT NULL,
   `pctimestring` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_game_event` (`game_id`,`game_event_id`)
+  UNIQUE KEY `idx_game_event` (`game_id`,`game_event_id`),
+  KEY `idx_player_id` (`player_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `play_type_statsnbacom`;
@@ -641,9 +645,31 @@ DROP TABLE IF EXISTS `play_type_statsnbacom`;
 CREATE TABLE `play_type_statsnbacom` (
   `id` int(11) NOT NULL,
   `re` varchar(256) DEFAULT NULL,
+  `name` varchar(256) DEFAULT NULL,
   `priority` int(11) DEFAULT NULL,
-  `is_shot` tinyint(4) DEFAULT NULL,
-  `is_shot_made` tinyint(4) DEFAULT NULL,
+  `is_shot` tinyint(4) DEFAULT '0',
+  `is_shot_made` tinyint(4) DEFAULT '0',
+  `is_freethrow` tinyint(4) DEFAULT '0',
+  `is_freethrow_made` tinyint(4) DEFAULT '0',
+  `is_freethrow_last` tinyint(4) DEFAULT '0',
+  `is_rebound` tinyint(4) DEFAULT '0',
+  `is_offensive_rebound` tinyint(4) DEFAULT '0',
+  `is_defensive_rebound` tinyint(4) DEFAULT '0',
+  `is_foul` tinyint(4) DEFAULT '0',
+  `is_turnover` tinyint(4) DEFAULT '0',
+  `is_assist` tinyint(4) DEFAULT '0',
+  `is_steal` tinyint(4) DEFAULT '0',
+  `is_block` tinyint(4) DEFAULT '0',
+  `is_technical` tinyint(4) DEFAULT '0',
+  `is_violation` tinyint(4) DEFAULT '0',
+  `is_timeout` tinyint(4) DEFAULT '0',
+  `is_on_floor` tinyint(4) DEFAULT '0',
+  `is_team_play` tinyint(4) DEFAULT '0',
+  `points_converted` tinyint(4) DEFAULT NULL,
+  `points_possible` tinyint(4) DEFAULT NULL,
+  `has_player_id` tinyint(4) DEFAULT '0',
+  `has_player1_id` tinyint(4) DEFAULT '0',
+  `has_player2_id` tinyint(4) DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -763,6 +789,8 @@ CREATE TABLE `player_statsnbacom` (
   `game_id` int(11) NOT NULL DEFAULT '0',
   `statsnbacom_team_id` int(11) DEFAULT NULL,
   `statsnbacom_player_name` varchar(100) DEFAULT NULL,
+  `player_id` int(11) DEFAULT NULL,
+  `team_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`statsnbacom_player_id`,`game_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
