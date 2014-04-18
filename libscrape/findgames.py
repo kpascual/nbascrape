@@ -11,13 +11,13 @@ import json
 # A script that scrapes ESPN.com's scoreboard to retrieve ESPN's game_id and store into MySQL db
 dbobj = db.Db(config.dbconn_prod_nba)
 
-def getScoreboardDoc(dt): 
+def getEspnScoreboardDoc(dt): 
     url = 'http://espn.go.com/nba/scoreboard?date=%s' % dt.isoformat().replace('-','')
     response = urllib2.urlopen(url)
     return response.read()
 
 
-def getGameIdsAndTeams(html, season):
+def getEspnData(html, season):
     soup = BeautifulSoup(html)
     links = soup.findAll(href=re.compile("/nba/conversation.*"))
     links = list(set(links))
@@ -37,12 +37,12 @@ def getGameIdsAndTeams(html, season):
             away_team_id = 0
             team_div = soup.findAll(id='%s-aTeamName' % game_id)
             if team_div and hasattr(team_div[0], 'a'):
-                away_team_id, away_team, away_team_nbacom, away_team_nickname = findTeamName(team_div[0].a.renderContents(), season)
+                away_team_id, away_team, away_team_nbacom, away_team_nickname = _findTeamName(team_div[0].a.renderContents(), season)
 
             home_team_id = 0
             team_div = soup.findAll(id='%s-hTeamName' % game_id)
             if team_div and hasattr(team_div[0], 'a'):
-                home_team_id, home_team, home_team_nbacom, home_team_nickname = findTeamName(team_div[0].a.renderContents(), season)
+                home_team_id, home_team, home_team_nbacom, home_team_nickname = _findTeamName(team_div[0].a.renderContents(), season)
 
 
             game_info.append(
@@ -60,7 +60,7 @@ def getGameIdsAndTeams(html, season):
     return game_info
 
 
-def findTeamName(name, season):
+def _findTeamName(name, season):
     teams = _getTeamData(season)
     
     for team in teams:
@@ -77,7 +77,7 @@ def _getTeamData(season):
     return result 
 
 
-def _fillInGameData(current_season, season_type, game_data, dt):
+def _translateEspnGameData(game_data, dt, current_season, season_type):
 
     final = []
     for g in game_data:
@@ -145,7 +145,7 @@ def getUrl(url):
     return response.read()
 
 
-def statsNbaCom(dt):
+def getStatsNbaComData(dt):
     dt_formatted = dt.strftime("%m/%d/%Y")
     url = 'http://stats.nba.com/stats/scoreboard/?LeagueID=00&gameDate=%s&DayOffset=0' % (dt_formatted)
     raw = getUrl(url)
@@ -153,7 +153,6 @@ def statsNbaCom(dt):
     
     data = json.loads(raw)
     for line in data['resultSets']:
-        print line['name']
         if line['name'] == 'GameHeader':
             for row in line['rowSet']:
                 games.append(dict(zip(line['headers'], row)))
@@ -182,6 +181,22 @@ def saveStatsNbaCom():
                 dbobj.query(sql)
 
 
+def mergeEspnStatsNbaComData(data_espn, data_stats_nbacom):
+    games = []
+    for line_espn in data_espn:
+        line_espn['statsnbacom_game_id'] = 0
+        for line_stats_nbacom in data_stats_nbacom:
+            if line_espn['nbacom_game_id'] == line_stats_nbacom['GAMECODE']:
+                line_espn['statsnbacom_game_id'] = line_stats_nbacom['GAME_ID']
+                line_espn['national_tv'] = line_stats_nbacom['NATL_TV_BROADCASTER_ABBREVIATION']
+                line_espn['gametime'] = line_stats_nbacom['GAME_STATUS_TEXT']
+
+        games.append(line_espn)
+
+
+    return games
+
+
 
 def backfill():
 
@@ -200,24 +215,28 @@ def backfill():
         time.sleep(3)
 
 
-
 def main():
-    dt = datetime.date(2014,1,25)
-    statsNbaCom(dt)
-    
+    dt = datetime.date(2014,4,19)
+    go(dt, '2013-2014', 'POST')
 
 
 def go(dt, season, season_type):
     
-    html = getScoreboardDoc(dt)
-    gamedata = getGameIdsAndTeams(html, season)
-    complete_gamedata = _fillInGameData(season, season_type, gamedata, dt)
+    # ESPN Data
+    html_espn = getEspnScoreboardDoc(dt)
+    data_espn = getEspnData(html_espn, season)
+    data_espn = _translateEspnGameData(data_espn, dt, season, season_type)
 
-    for game in complete_gamedata:
+    # stats.nba.com data
+    data_stats_nbacom = getStatsNbaComData(dt)
+    
+    data_combined = mergeEspnStatsNbaComData(data_espn, data_stats_nbacom)
+
+    for game in data_combined:
         print game
         dbobj.insert_or_update('game',[game])
     
 
 
 if __name__ == '__main__':
-    saveStatsNbaCom()
+    main()
