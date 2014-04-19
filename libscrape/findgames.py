@@ -216,7 +216,7 @@ def backfill():
 
 
 def main():
-    dt = datetime.date(2014,4,19)
+    dt = datetime.date.today()
     go(dt, '2013-2014', 'POST')
 
 
