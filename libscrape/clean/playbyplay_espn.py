@@ -294,6 +294,16 @@ class Clean:
         f.write(json.dumps(data))
 
 
+def run(game, filename, dbobj):
+    pbpvars = {
+        'filename':  filename,
+        'gamedata':  game,
+        'dbobj'   :  dbobj
+    }
+    Clean(**pbpvars).cleanAll()
+
+
+
 def main():
     dbobj = db.Db(config.dbconn_prod_nba)
     game = dbobj.query_dict("SELECT * FROM game WHERE id = 5378")[0]

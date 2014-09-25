@@ -8,6 +8,7 @@ from BeautifulSoup import BeautifulSoup
 from libscrape.config import constants
 
 
+LOGDIR_SOURCE = constants.LOGDIR_SOURCE
 LOGDIR_EXTRACT = constants.LOGDIR_EXTRACT
 
 
@@ -100,6 +101,15 @@ class ShotExtract:
 
         return []
 
+
+
+def run(game, filename):
+    params = {
+        'html': open(LOGDIR_SOURCE + filename,'r').read(),
+        'filename':  filename,
+        'gamedata': game
+    }
+    ShotExtract(**params).extractAndDump()
 
 
     

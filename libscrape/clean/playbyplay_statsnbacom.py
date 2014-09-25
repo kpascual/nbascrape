@@ -104,7 +104,10 @@ class Clean:
             elif play['visitordescription']:
                 play['description'] = play['visitordescription'].strip()
             else:
-                play['description'] = play['neutraldescription'].strip()
+                if play['neutraldescription'] is not None:
+                    play['description'] = play['neutraldescription'].strip()
+                else:
+                    play['description'] = ''
 
             data.append(play)
 
@@ -197,6 +200,10 @@ class Clean:
         f = open(LOGDIR_CLEAN + self.filename,'w')
         play_json = json.dumps(plays)
         f.write(play_json)
+
+
+def run(game, filename, dbobj):
+    Clean(filename, game, dbobj).clean()
 
 
 def main():

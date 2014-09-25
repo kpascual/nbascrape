@@ -157,3 +157,11 @@ class CleanShots:
         return cleaned
 
 
+def run(game, filename, dbobj):
+    shotvars = {
+        'filename':  filename,
+        'gamedata':  game,
+        'dbobj'   :  dbobj
+    }
+    CleanShots(**shotvars).clean()
+

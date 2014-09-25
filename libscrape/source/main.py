@@ -29,60 +29,60 @@ def getSourceDoc(url):
     return response.read()
 
 
-def func_boxscore_cbssports(game, league):
+def func_boxscore_cbssports(game):
     # Data comes from shotchart_cbssports file
     return False
 
 
-def func_shotchart_cbssports(game, league):
-    return getSourceDoc(constants.URL[league]['SHOTCHART_CBSSPORTS'] + game['cbssports_game_id']) 
+def func_shotchart_cbssports(game):
+    return getSourceDoc(constants.URL['shotchart_cbssports'] + game['cbssports_game_id']) 
 
 
-def func_playbyplay_nbacom(game, league):
-    return getSourceDoc(constants.URL[league]['PLAYBYPLAY_NBACOM'].replace('<game_id>',str(game['nbacom_game_id']))) 
+def func_playbyplay_nbacom(game):
+    return getSourceDoc(constants.URL['playbyplay_nbacom'].replace('<game_id>',str(game['nbacom_game_id']))) 
 
 
-def func_shotchart_nbacom(game, league):
-    return getSourceDoc(constants.URL[league]['SHOTCHART_NBACOM'].replace('<game_id>',str(game['nbacom_game_id']))) 
+def func_shotchart_nbacom(game):
+    return getSourceDoc(constants.URL['shotchart_nbacom'].replace('<game_id>',str(game['nbacom_game_id']))) 
 
 
-def func_boxscore_nbacom(game, league):
-    return getSourceDoc(constants.URL[league]['BOXSCORE_NBACOM'].replace('<game_id>',str(game['nbacom_game_id']))) 
+def func_boxscore_nbacom(game):
+    return getSourceDoc(constants.URL['boxscore_nbacom'].replace('<game_id>',str(game['nbacom_game_id']))) 
 
 
-def func_playbyplay_espn(game, league):
-    return getSourceDoc(constants.URL[league]['PLAYBYPLAY_ESPN'].replace('<game_id>',str(game['espn_game_id']))) 
+def func_playbyplay_espn(game):
+    return getSourceDoc(constants.URL['playbyplay_espn'].replace('<game_id>',str(game['espn_game_id']))) 
 
 
-def func_shotchart_espn(game, league):
-    return getSourceDoc(constants.URL[league]['SHOTCHART_ESPN'].replace('<game_id>',str(game['espn_game_id']))) 
+def func_shotchart_espn(game):
+    return getSourceDoc(constants.URL['shotchart_espn'].replace('<game_id>',str(game['espn_game_id']))) 
 
 
-def func_shotchart_wnbacom(game, league):
-    return getSourceDoc(constants.URL[league]['SHOTCHART_NBACOM'].replace('<game_id>',str(game['nbacom_game_id']))) 
+def func_shotchart_wnbacom(game):
+    return getSourceDoc(constants.URL['shotchart_nbacom'].replace('<game_id>',str(game['nbacom_game_id']))) 
 
 
-def func_playbyplay_statsnbacom(game, league):
-    return getSourceDoc(constants.URL[league]['PLAYBYPLAY_STATSNBACOM'].replace('<game_id>',str(game['statsnbacom_game_id']))) 
+def func_playbyplay_statsnbacom(game):
+    return getSourceDoc(constants.URL['playbyplay_statsnbacom'].replace('<game_id>',str(game['statsnbacom_game_id']))) 
 
 
-def func_shotchart_statsnbacom(game, league):
-    return getSourceDoc(constants.URL[league]['SHOTCHART_STATSNBACOM'].replace('<game_id>',str(game['statsnbacom_game_id']))) 
+def func_shotchart_statsnbacom(game):
+    return getSourceDoc(constants.URL['shotchart_statsnbacom'].replace('<game_id>',str(game['statsnbacom_game_id']))) 
 
 
-def func_boxscore_statsnbacom(game, league):
-    return getSourceDoc(constants.URL[league]['BOXSCORE_STATSNBACOM'].replace('<game_id>',str(game['statsnbacom_game_id']))) 
+def func_boxscore_statsnbacom(game):
+    return getSourceDoc(constants.URL['boxscore_statsnbacom'].replace('<game_id>',str(game['statsnbacom_game_id']))) 
 
 
-def getAndSaveFiles(game, files, league='nba'):
+def getAndSaveFiles(game, files):
 
     print "+++ SOURCE: %s - %s" % (game['id'], game['abbrev'])
 
     filenames = {}
     for f in files:
         filename = '%s_%s' % (game['abbrev'],f)
-        if not doesFileExist(filename):
-            body = globals()["func_" + f](game, league)
+        if not _doesFileExist(filename):
+            body = globals()["func_" + f](game)
             if body is not False:
                 saveToFile(filename, body)
                 print '  + %s saved ' % (f)
@@ -96,15 +96,15 @@ def getAndSaveFiles(game, files, league='nba'):
 
 
 
-def doesFileExist(filename):
+def _doesFileExist(filename):
     if filename in os.listdir(LOGDIR_SOURCE):
         return True
     else:
         return False
 
 
-def go(games, files, league='nba'):
-    return [(gamedata,getAndSaveFiles(gamedata, files, league)) for gamedata in games]
+def go(games, files):
+    return [(gamedata, getAndSaveFiles(gamedata, files)) for gamedata in games]
 
 
 def main(dt = None):

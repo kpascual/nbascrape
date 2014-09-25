@@ -188,6 +188,12 @@ class Clean:
         shot_json = json.dumps(shots)
         f.write(shot_json)
 
+
+def run(game, filename, dbobj):
+    Clean(filename, game, dbobj).cleanAll()
+
+
+
 def main():
 
     files = [

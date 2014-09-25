@@ -56,3 +56,5 @@ class CleanBoxScore:
         writer.writerows(box_score_fields + box_score_data)
          
 
+def run(game, filename, dbobj):
+    CleanBoxScore(game, dbobj).clean()

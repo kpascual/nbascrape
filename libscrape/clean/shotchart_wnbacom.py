@@ -161,7 +161,7 @@ class CleanWnba(Clean):
 
 
 def run(game, filename, dbobj):
-    Clean(filename, game, dbobj).cleanAll()
+    CleanWnba(filename, game, dbobj).cleanAll()
 
 
 def main():

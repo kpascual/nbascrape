@@ -15,6 +15,9 @@ LOGDIR_SOURCE = constants.LOGDIR_SOURCE
 def copyFile(filename):
     shutil.copyfile(LOGDIR_SOURCE + filename, LOGDIR_EXTRACT + filename)
 
+def run(filename):
+    shutil.copyfile(LOGDIR_SOURCE + filename, LOGDIR_EXTRACT + filename)
+
 def main():
     files = [f for f in os.listdir(LOGDIR_SOURCE) if 'nbacom' in f]
     for f in files:

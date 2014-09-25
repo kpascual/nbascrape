@@ -4,17 +4,8 @@ import time
 import sys
 import os
 import logging
+import importlib
 
-import pbp_espn
-import pbp_nbacom
-import shotchart_cbssports
-import shotchart_espn
-import shotchart_nbacom
-import boxscore_cbssports
-import boxscore_nbacom
-import shotchart_statsnbacom
-import playbyplay_statsnbacom
-import boxscore_statsnbacom
 import player
 
 from libscrape.config import constants
@@ -50,59 +41,6 @@ def main():
     #cleanCBSSportsPlayers(list_cbssports_players)
 
 
-def func_shotchart_cbssports(game, filename, dbobj):
-    shotvars = {
-        'filename':  filename,
-        'gamedata':  game,
-        'dbobj'   :  dbobj
-    }
-    shotchart_cbssports.CleanShots(**shotvars).clean()
-
-
-def func_boxscore_cbssports(game, filename, dbobj):
-    boxscore_cbssports.CleanBoxScore(game, dbobj).clean()
-
-
-def func_playbyplay_espn(game, filename, dbobj):
-    pbpvars = {
-        'filename':  filename,
-        'gamedata':  game,
-        'dbobj'   :  dbobj
-    }
-    pbp_espn.Clean(**pbpvars).cleanAll()
-
-
-def func_shotchart_espn(game, filename, dbobj):
-    shotchart_espn.Clean(filename,game, dbobj).cleanAll()
-
-
-def func_playbyplay_nbacom(game, filename, dbobj):
-    pbp_nbacom.Clean(filename,game, dbobj).clean()
-
-
-def func_shotchart_nbacom(game, filename, dbobj):
-    shotchart_nbacom.Clean(filename,game, dbobj).cleanAll()
-
-
-def func_boxscore_nbacom(game, filename, dbobj):
-    boxscore_nbacom.CleanBoxScore(filename,game, dbobj).clean()
-
-
-def func_shotchart_wnbacom(game, filename, dbobj):
-    shotchart_nbacom.CleanWnba(filename,game, dbobj).cleanAll()
-
-
-def func_shotchart_statsnbacom(game, filename, dbobj):
-    shotchart_statsnbacom.Clean(filename, game, dbobj).clean()
-
-
-def func_playbyplay_statsnbacom(game, filename, dbobj):
-    playbyplay_statsnbacom.Clean(filename, game, dbobj).clean()
-
-
-def func_boxscore_statsnbacom(game, filename, dbobj):
-    boxscore_statsnbacom.Clean(filename, game, dbobj).clean()
-
 
 def go(tuple_games_and_files, dbobj):
 
@@ -129,11 +67,13 @@ def go(tuple_games_and_files, dbobj):
             obj.resolveStatsNbacom()
             obj.resolveStatsNbacomByGame(gamedata['id'])
 
-        for f in files.keys():
-            print "  + %s" % (f)
+        for module, filename in files.items():
+            print "  + %s" % (module)
             step_time = time.time()
-            globals()["func_" + f](gamedata,files[f], dbobj)
-            logging.info("CLEAN - %s - game_id: %s - : time_elapsed %.2f" % (f, gamedata['id'], time.time() - step_time))
+            lib = importlib.import_module('clean.%s' % (module))
+            getattr(lib,'run')(gamedata, filename, dbobj)
+
+            logging.info("CLEAN - %s - game_id: %s - : time_elapsed %.2f" % (module, gamedata['id'], time.time() - step_time))
 
 
 

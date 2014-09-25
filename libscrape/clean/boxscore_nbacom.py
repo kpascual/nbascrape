@@ -230,6 +230,10 @@ class CleanBoxScore:
         f.write(data_json)
 
 
+def run(game, filename, dbobj):
+    CleanBoxScore(filename,game, dbobj).clean()
+
+
 def main():
 
     files = [f for f in os.listdir(LOGDIR_EXTRACT) if '2011-12' in f and 'boxscore' in f]

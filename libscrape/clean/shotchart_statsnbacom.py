@@ -147,6 +147,10 @@ class Clean:
         f.write(shot_json)
 
 
+def run(game, filename, dbobj):
+    Clean(filename, game, dbobj).clean()
+
+
 def main():
 
     dbobj = db.Db(config.dbconn_prod_nba)
